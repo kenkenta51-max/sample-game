@@ -1,0 +1,1621 @@
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<title>じゃが畑ファクトリー</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Dela+Gothic+One&family=M+PLUS+Rounded+1c:wght@500;800;900&display=swap">
+<style>
+/* Layout: full-screen 3D diorama, HUD floats on top like stickers on the snack cup */
+:root{
+  --green:#1f8a3c; --green-d:#0f5e28; --green-l:#7cc242;
+  --red:#e3262b; --yellow:#ffd31a; --cream:#fff4cf; --cream-d:#f3e1a6;
+  --ink:#3a2a14; --carrot:#f08a24; --sky:#9fdcff; --flavor:#1f8a3c;
+  --f-logo:"Dela Gothic One","Hiragino Sans","Yu Gothic",sans-serif;
+  --f-ui:"M PLUS Rounded 1c","Hiragino Maru Gothic ProN","Hiragino Sans","Yu Gothic",sans-serif;
+  color-scheme:light;
+}
+html,body{height:100%;margin:0;overflow:hidden;background:var(--cream);color:var(--ink);font-family:var(--f-ui);}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+#root{position:fixed;inset:0;}
+.wrap{position:absolute;inset:0;overflow:hidden;touch-action:none;user-select:none;-webkit-user-select:none;background:var(--sky);}
+.wrap canvas{position:absolute;inset:0;width:100%;height:100%;display:block;}
+.shake{animation:shake .45s;}
+@keyframes shake{0%,100%{transform:none}20%{transform:translate(-7px,4px)}40%{transform:translate(6px,-5px)}60%{transform:translate(-4px,3px)}80%{transform:translate(3px,-2px)}}
+.ui{position:absolute;inset:0;pointer-events:none;}
+.ui button,.ui .hit{pointer-events:auto;}
+button{font-family:var(--f-ui);cursor:pointer;border:none;color:inherit;}
+button:focus-visible{outline:3px solid var(--red);outline-offset:2px;}
+
+/* sticker style: cream panels speckled like a salad stick */
+.sticker{background-color:var(--cream);background-image:radial-gradient(circle at 30% 40%,rgba(240,138,36,.22) 1.6px,transparent 2.6px),radial-gradient(circle at 70% 70%,rgba(60,154,50,.2) 1.6px,transparent 2.6px);background-size:22px 16px,30px 21px;border:3px solid var(--green-d);border-radius:16px;box-shadow:0 4px 0 var(--green-d);}
+/* falling stick confetti */
+.cf{position:absolute;top:-70px;width:11px;border-radius:6px;background:radial-gradient(circle at 30% 25%,var(--d1) 1.6px,transparent 2.4px),radial-gradient(circle at 70% 65%,var(--d2) 1.6px,transparent 2.4px),linear-gradient(90deg,#e6c875,#f9ebb3 50%,#e2c06c);background-size:11px 14px,11px 18px,100% 100%;box-shadow:inset 0 0 0 1px #c49a43;animation:cffall 2s ease-in forwards;}
+@keyframes cffall{0%{transform:translateY(0) rotate(0)}100%{transform:translateY(115vh) rotate(var(--r))}}
+/* fever glow */
+.fever:after{content:"";position:absolute;inset:0;pointer-events:none;box-shadow:inset 0 0 40px 10px rgba(255,190,0,.75),inset 0 0 0 5px #ffd31a;animation:fev .5s ease-in-out infinite alternate;z-index:2;}
+@keyframes fev{from{opacity:.55}to{opacity:1}}
+.fevtag{position:absolute;right:max(14px,env(safe-area-inset-right,0px));top:calc(46% - 44px);background:linear-gradient(90deg,#ff5a1f,#ffd31a);color:#fff;font-family:var(--f-logo);font-size:16px;padding:3px 12px;border-radius:99px;border:2px solid #fff;animation:pulse .5s infinite;}
+/* how to play */
+.howto{width:min(400px,100%);max-height:100%;display:flex;flex-direction:column;background:var(--cream);border:4px solid var(--green-d);border-radius:22px;box-shadow:0 6px 0 var(--green-d);overflow:hidden;}
+.howto header{background:var(--green);color:#fff;padding:12px 16px;display:flex;align-items:center;justify-content:space-between;gap:8px;}
+.howto header h2{margin:0;font-family:var(--f-logo);font-weight:400;font-size:22px;}
+.howto header button{background:#fff;color:var(--green-d);font-weight:900;border-radius:99px;padding:6px 14px;font-size:14px;}
+.howto .list{overflow-y:auto;padding:14px;display:flex;flex-direction:column;gap:10px;-webkit-overflow-scrolling:touch;touch-action:pan-y;}
+.step{display:grid;grid-template-columns:56px 1fr;gap:10px;align-items:start;background:#fff;border:3px solid #e8d9a6;border-radius:16px;padding:10px;}
+.step svg{width:56px;height:56px;}
+.step h3{margin:0 0 3px;font-size:15px;font-weight:900;color:var(--green-d);display:flex;align-items:center;gap:6px;}
+.step h3 b{background:var(--red);color:#fff;border-radius:99px;width:22px;height:22px;display:grid;place-items:center;font-size:12px;flex:none;}
+.step p{margin:0;font-size:13px;line-height:1.6;font-weight:500;min-width:0;}
+.step p em{font-style:normal;font-weight:900;color:var(--red);}
+.tips{background:#fff3c4;border:2px dashed #d6b45a;border-radius:14px;padding:10px 12px;font-size:12.5px;line-height:1.7;font-weight:500;}
+.tips b{color:var(--green-d);}
+.howto footer{padding:10px 14px 14px;display:flex;justify-content:center;}
+.howto footer .big{margin-top:0;}
+.titlebtns{display:flex;flex-direction:column;align-items:center;width:100%;}
+.cupart{width:150px;height:150px;margin-top:2px;filter:drop-shadow(0 6px 0 rgba(15,94,40,.35));}
+.cupart .st{animation:stk 1.4s ease-in-out infinite;transform-box:fill-box;}
+
+/* ---------- HUD ---------- */
+.top{position:absolute;left:0;right:0;top:0;padding:calc(env(safe-area-inset-top,0px) + 10px) max(12px,env(safe-area-inset-right,0px)) 0 max(12px,env(safe-area-inset-left,0px));display:flex;flex-direction:column;gap:8px;}
+.row{display:flex;gap:8px;align-items:center;}
+.daypill{background:var(--red);color:#fff;font-family:var(--f-logo);font-size:15px;padding:6px 10px;border-radius:12px;border:3px solid #fff;box-shadow:0 3px 0 rgba(0,0,0,.25);white-space:nowrap;}
+.flv{background:var(--flavor);color:#fff;font-weight:900;font-size:12px;padding:4px 9px;border-radius:99px;border:2px solid #fff;white-space:nowrap;}
+.clock{flex:1;min-width:0;padding:5px 10px;display:flex;flex-direction:column;gap:3px;}
+.clock .t{display:flex;justify-content:space-between;font-weight:900;font-size:12px;font-variant-numeric:tabular-nums;}
+.sunico{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:5px;box-shadow:0 0 0 3px rgba(255,184,0,.3);vertical-align:-1px;}
+.bar{height:8px;border-radius:9px;background:#e7d39a;overflow:hidden;position:relative;}
+.bar i{position:absolute;left:0;top:0;bottom:0;border-radius:9px;background:linear-gradient(90deg,#ffb347,#ffd31a 40%,#ff8a5c);}
+.score{font-family:var(--f-logo);font-size:20px;color:var(--red);text-shadow:2px 2px 0 var(--yellow),-1px -1px 0 #fff;min-width:72px;text-align:right;font-variant-numeric:tabular-nums;}
+.iconbtn{width:40px;height:40px;border-radius:12px;background:var(--cream);border:3px solid var(--green-d);box-shadow:0 3px 0 var(--green-d);font-weight:900;font-size:18px;display:grid;place-items:center;flex:none;}
+.goal{padding:6px 10px;display:flex;align-items:center;gap:8px;flex:1;min-width:0;}
+.goal b{font-family:var(--f-logo);font-size:16px;white-space:nowrap;font-variant-numeric:tabular-nums;}
+.goal .cups{display:flex;gap:3px;flex-wrap:wrap;flex:1;min-width:0;}
+.cupi{width:14px;height:18px;border-radius:2px 2px 5px 5px;background:#d9cfa8;border:2px solid #b9ad84;}
+.cupi.on{background:var(--flavor);border-color:var(--green-d);box-shadow:inset 0 5px 0 #fff3c4;}
+.inv{display:flex;gap:6px;flex-wrap:wrap;}
+.chip{display:flex;align-items:center;gap:4px;background:rgba(255,244,207,.94);border:2px solid var(--green-d);border-radius:99px;padding:2px 8px 2px 3px;font-weight:900;font-size:13px;font-variant-numeric:tabular-nums;}
+.chip.bump{animation:bump .35s;}
+@keyframes bump{50%{transform:scale(1.25)}}
+.dot{width:20px;height:20px;border-radius:50%;display:grid;place-items:center;font-size:11px;color:#fff;font-weight:900;}
+.endbtn{align-self:flex-end;background:var(--red);color:#fff;font-weight:900;font-size:14px;padding:8px 14px;border-radius:99px;border:3px solid #fff;box-shadow:0 3px 0 rgba(0,0,0,.25);animation:pulse 1.2s infinite;}
+@keyframes pulse{50%{transform:scale(1.06)}}
+
+.bottom{position:absolute;left:0;right:0;bottom:0;padding:0 max(12px,env(safe-area-inset-right,0px)) calc(env(safe-area-inset-bottom,0px) + 12px) max(12px,env(safe-area-inset-left,0px));display:flex;flex-direction:column;gap:8px;}
+.hint{align-self:center;background:rgba(58,42,20,.82);color:#fff;font-weight:800;font-size:13px;padding:6px 14px;border-radius:99px;text-align:center;max-width:100%;}
+.hint.warn{background:var(--red);}
+.panel{padding:10px;display:flex;flex-direction:column;gap:10px;}
+.tabs{display:flex;gap:6px;align-items:center;}
+.tab{flex:1;padding:8px 0;border-radius:12px;font-weight:900;font-size:15px;background:#eadcab;color:#7a6a40;border:3px solid transparent;}
+.tab.on{background:var(--green);color:#fff;border-color:var(--green-d);box-shadow:0 3px 0 var(--green-d);}
+.swipe{font-size:11px;font-weight:800;color:#7a6a40;white-space:nowrap;}
+.seeds{display:flex;gap:8px;}
+.seed{flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;padding:6px 0 5px;border-radius:12px;background:#fff;border:3px solid #e2d29c;font-weight:900;font-size:12px;}
+.seed.on{border-color:var(--red);background:#fff1d6;box-shadow:0 0 0 3px var(--yellow);}
+.seed .em{width:30px;height:30px;}
+.blend{display:flex;align-items:center;justify-content:center;gap:8px;padding:9px;border-radius:12px;background:#e9e1c4;color:#9a8c63;font-weight:900;font-size:14px;border:3px solid #d6cba3;}
+.blend.ok{background:var(--yellow);color:var(--ink);border-color:#c79a00;box-shadow:0 3px 0 #c79a00;animation:pulse 1s infinite;}
+.blend small{font-size:11px;font-weight:800;}
+
+.gauge{position:relative;height:44px;border-radius:22px;background:linear-gradient(#f7e6a6,#ecd28a);border:3px solid #b98b3c;overflow:hidden;}
+.gauge:before{content:"";position:absolute;inset:0;background:radial-gradient(circle at 20% 40%,#f08a24 2px,transparent 3px),radial-gradient(circle at 70% 60%,#3c9a32 2px,transparent 3px);background-size:26px 18px,34px 22px;opacity:.7;}
+.zone-good{position:absolute;top:0;bottom:0;background:rgba(124,194,66,.35);}
+.zone-perfect{position:absolute;top:0;bottom:0;background:rgba(227,38,43,.85);display:grid;place-items:center;color:#fff;font-size:10px;font-weight:900;}
+#needle{position:absolute;top:-4px;bottom:-4px;width:8px;margin-left:-4px;background:#fff;border:2px solid var(--ink);border-radius:4px;box-shadow:0 0 6px rgba(0,0,0,.4);}
+.factory-row{display:flex;gap:8px;align-items:stretch;}
+.cutbtn{flex:1.4;background:var(--red);color:#fff;font-family:var(--f-logo);font-size:24px;letter-spacing:.06em;border-radius:16px;border:3px solid #fff;box-shadow:0 5px 0 #a3151a;padding:10px 0;}
+.cutbtn:active{transform:translateY(4px);box-shadow:0 1px 0 #a3151a;}
+.cutbtn.off{background:#c9b98e;box-shadow:0 5px 0 #9a8c63;}
+.fill{display:flex;gap:4px;justify-content:center;align-items:flex-end;}
+.fill i{width:7px;height:26px;border-radius:4px;background:#e2d6ad;}
+.fill i.on{background:linear-gradient(#f7e6a6,#e9c76a);box-shadow:inset 0 0 0 2px #c89a3a;}
+.combo{position:absolute;right:max(14px,env(safe-area-inset-right,0px));top:46%;text-align:right;font-family:var(--f-logo);color:var(--yellow);-webkit-text-stroke:2px var(--red);text-shadow:0 4px 0 var(--red);line-height:1;}
+.combo b{display:block;font-size:44px;}
+.combo span{font-size:16px;}
+
+/* pop texts */
+.fx{position:absolute;inset:0;pointer-events:none;overflow:hidden;z-index:3;}
+.pop{position:absolute;transform:translate(-50%,-50%);font-weight:900;font-size:17px;color:#fff;text-shadow:0 2px 0 var(--green-d),0 0 6px rgba(0,0,0,.35);white-space:nowrap;animation:popup 1s ease-out forwards;}
+.pop.big{font-family:var(--f-logo);font-size:26px;color:var(--yellow);-webkit-text-stroke:1.5px var(--red);text-shadow:0 3px 0 var(--red);}
+.pop.miss{color:#ddd;text-shadow:0 2px 0 #555;}
+.pop.gold{color:#ffe36b;text-shadow:0 2px 0 #a06a00;}
+@keyframes popup{0%{opacity:0;transform:translate(-50%,-30%) scale(.6)}15%{opacity:1;transform:translate(-50%,-60%) scale(1.15)}100%{opacity:0;transform:translate(-50%,-180%) scale(1)}}
+.callout{position:absolute;left:50%;top:38%;transform:translate(-50%,-50%);font-family:var(--f-logo);font-size:40px;white-space:nowrap;color:var(--yellow);-webkit-text-stroke:2px var(--red);text-shadow:0 5px 0 var(--red),0 0 24px rgba(255,211,26,.8);animation:callout 1.3s ease-out forwards;}
+.callout small{display:block;text-align:center;font-family:var(--f-ui);font-weight:900;font-size:16px;color:#fff;-webkit-text-stroke:0;text-shadow:0 2px 0 var(--green-d);}
+@keyframes callout{0%{opacity:0;transform:translate(-50%,-50%) scale(2.2) rotate(-8deg)}18%{opacity:1;transform:translate(-50%,-50%) scale(.95) rotate(-3deg)}28%{transform:translate(-50%,-50%) scale(1.05) rotate(-3deg)}80%{opacity:1}100%{opacity:0;transform:translate(-50%,-70%) scale(1) rotate(-3deg)}}
+.legend{position:absolute;inset:0;display:grid;place-items:center;background:radial-gradient(circle,rgba(255,220,90,.55),rgba(120,60,0,.55));animation:lgfade 2.4s forwards;}
+.legend .rays{position:absolute;left:50%;top:45%;width:240vmax;height:240vmax;margin:-120vmax 0 0 -120vmax;background:repeating-conic-gradient(rgba(255,240,150,.55) 0 8deg,transparent 8deg 18deg);animation:spin 3s linear infinite;}
+.legend .lt{position:relative;text-align:center;animation:lgpop .7s cubic-bezier(.2,1.6,.4,1) both;}
+.legend .lt b{display:block;font-family:var(--f-logo);font-size:clamp(32px,10.5vw,56px);line-height:1;background:linear-gradient(#fff7b0,#ffd31a 45%,#e08a00 55%,#ffe98a);-webkit-background-clip:text;background-clip:text;color:transparent;-webkit-text-stroke:2px #7a3e00;filter:drop-shadow(0 6px 0 #7a3e00) drop-shadow(0 0 20px #fff2a0);}
+.legend .lt span{display:inline-block;margin-top:10px;font-weight:900;color:#fff;font-size:17px;background:#7a3e00;padding:4px 14px;border-radius:99px;}
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes lgpop{0%{transform:scale(.2) rotate(-20deg);opacity:0}100%{transform:scale(1) rotate(-4deg);opacity:1}}
+@keyframes lgfade{0%{opacity:0}8%{opacity:1}80%{opacity:1}100%{opacity:0}}
+.flash{position:absolute;inset:0;background:#fff;animation:flash .5s forwards;}
+@keyframes flash{from{opacity:.9}to{opacity:0}}
+
+/* banners & screens */
+.intro{position:absolute;left:0;right:0;top:34%;display:flex;flex-direction:column;align-items:center;gap:6px;animation:introIn 2s ease forwards;}
+.intro .d{font-family:var(--f-logo);font-size:56px;color:#fff;-webkit-text-stroke:3px var(--green-d);text-shadow:0 6px 0 var(--green-d);}
+.intro .g{background:var(--cream);border:3px solid var(--green-d);border-radius:99px;padding:6px 18px;font-weight:900;font-size:17px;}
+.intro .n{background:var(--red);color:#fff;font-weight:900;padding:4px 14px;border-radius:99px;border:3px solid var(--yellow);}
+@keyframes introIn{0%{opacity:0;transform:scale(.6)}12%{opacity:1;transform:scale(1.05)}20%{transform:scale(1)}85%{opacity:1}100%{opacity:0}}
+.screen{position:absolute;inset:0;z-index:4;pointer-events:auto;display:flex;flex-direction:column;align-items:center;padding:calc(env(safe-area-inset-top,0px) + 18px) max(16px,env(safe-area-inset-right,0px)) calc(env(safe-area-inset-bottom,0px) + 18px) max(16px,env(safe-area-inset-left,0px));}
+.dim{background:rgba(30,60,30,.45);backdrop-filter:blur(2px);-webkit-backdrop-filter:blur(2px);}
+.logo{display:flex;flex-direction:column;align-items:center;transform:rotate(-3deg);margin-top:6px;}
+.logo .brand{background:var(--red);color:#fff;font-weight:900;font-size:13px;padding:3px 12px;border-radius:99px;border:2px solid #fff;letter-spacing:.1em;}
+.logo h1{margin:2px 0 0;font-family:var(--f-logo);font-weight:400;font-size:clamp(40px,13vw,64px);line-height:1.02;text-align:center;color:var(--red);-webkit-text-stroke:3px var(--yellow);paint-order:stroke fill;text-shadow:0 6px 0 var(--green-d);letter-spacing:.02em;}
+.logo h1 span{display:block;font-size:.62em;color:var(--green);-webkit-text-stroke:3px #fff;}
+.sticks{display:flex;gap:5px;margin-top:6px;}
+.sticks i{width:9px;border-radius:5px;background:linear-gradient(90deg,#e9cf83,#f7e6a6 50%,#e2c06c);box-shadow:inset 0 0 0 1px #c49a43;animation:stk 1.6s ease-in-out infinite;}
+@keyframes stk{50%{transform:translateY(-6px)}}
+.demo-tag{position:absolute;top:calc(env(safe-area-inset-top,0px) + 12px);right:max(12px,env(safe-area-inset-right,0px));background:rgba(58,42,20,.8);color:#fff;font-weight:900;font-size:11px;padding:4px 10px;border-radius:99px;letter-spacing:.12em;}
+.caption{margin-top:auto;background:var(--cream);border:3px solid var(--green-d);border-radius:18px;box-shadow:0 4px 0 var(--green-d);padding:10px 16px;font-weight:900;font-size:17px;text-align:center;max-width:340px;animation:capin .4s ease;}
+.caption small{display:block;font-size:12px;color:#7a6a40;font-weight:800;}
+@keyframes capin{from{opacity:0;transform:translateY(10px)}}
+.tapjoin{margin-top:10px;color:#fff;font-weight:900;font-size:14px;text-shadow:0 2px 0 var(--green-d);animation:blink 1.2s infinite;}
+@keyframes blink{50%{opacity:.35}}
+.big{background:var(--red);color:#fff;font-family:var(--f-logo);font-size:24px;padding:14px 0;width:min(320px,100%);border-radius:18px;border:4px solid #fff;box-shadow:0 6px 0 #a3151a;margin-top:12px;}
+.big:active{transform:translateY(4px);box-shadow:0 2px 0 #a3151a;}
+.sub{background:var(--cream);color:var(--green-d);font-weight:900;font-size:15px;padding:10px 0;width:min(320px,100%);border-radius:14px;border:3px solid var(--green-d);box-shadow:0 4px 0 var(--green-d);margin-top:10px;}
+.card{width:min(380px,100%);background:var(--cream);border:4px solid var(--green-d);border-radius:22px;box-shadow:0 6px 0 var(--green-d);padding:18px;display:flex;flex-direction:column;align-items:center;gap:8px;}
+.card h2{margin:0;font-family:var(--f-logo);font-weight:400;font-size:28px;color:var(--red);text-align:center;text-wrap:balance;}
+.days{display:grid;grid-template-columns:1fr 1fr;gap:10px;width:100%;}
+.daycard{display:flex;flex-direction:column;align-items:flex-start;gap:3px;padding:10px;border-radius:14px;background:#fff;border:3px solid #e2d29c;text-align:left;}
+.daycard .dn{font-family:var(--f-logo);font-size:18px;color:var(--green-d);}
+.daycard .meta{font-size:12px;font-weight:800;color:#7a6a40;}
+.daycard.lock{opacity:.5;}
+.stars{display:flex;gap:2px;font-size:16px;color:#d6c99a;}
+.stars .on{color:#ffb800;text-shadow:0 1px 0 #a36d00;}
+.rstars{display:flex;gap:8px;margin:4px 0;}
+.rstar{font-size:52px;line-height:1;color:#ddd0a3;}
+.rstar.on{color:#ffbf00;text-shadow:0 4px 0 #b37400;animation:starin .5s cubic-bezier(.2,1.8,.4,1) both;}
+@keyframes starin{from{transform:scale(0) rotate(-90deg)}}
+.stats{width:100%;display:grid;grid-template-columns:1fr auto;gap:4px 12px;font-weight:800;font-size:14px;}
+.stats b{font-variant-numeric:tabular-nums;text-align:right;}
+.res-score{font-family:var(--f-logo);font-size:40px;color:var(--red);text-shadow:2px 3px 0 var(--yellow);font-variant-numeric:tabular-nums;}
+.loading{position:absolute;inset:0;display:grid;place-items:center;background:var(--cream);font-family:var(--f-logo);color:var(--green);font-size:22px;}
+@media (prefers-reduced-motion:reduce){*{animation-duration:.01s!important;animation-iteration-count:1!important}}
+</style>
+
+<div id="root"><div class="loading">じゅんびちゅう…</div></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://unpkg.com/react@18.3.1/umd/react.production.min.js"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.production.min.js"></script>
+<script src="https://unpkg.com/htm@3.1.1/dist/htm.umd.js"></script>
+<script>
+'use strict';
+/* =====================================================================
+   DATA
+   ===================================================================== */
+const FX = 26; // x offset of the factory area
+// Tripo3D などで作った GLB モデルの URL（または data URI）を入れると、キャラクターの見た目を差し替えます
+const CHARACTER_GLB = { farm:'', factory:'' };
+const STICKS_PER_CUP = 8, STICKS_PER_POTATO = 4;
+const FLAVORS = {
+  salad:  { key:'salad',  name:'サラダ',     hex:'#1f8a3c', wall:0x2a9a48, roof:0xe3262b, grass:0x9fd46c, tree:0x4caf50, field:0xd2a868,
+            recipe:{carrot:1, parsley:1}, stick:{base:'#f7e6a6', dots:['#f08a24','#3c9a32']}, seeds:['potato','carrot','parsley'], cow:false },
+  cheese: { key:'cheese', name:'チーズ',     hex:'#e09b00', wall:0xf0b421, roof:0xe3262b, grass:0xbadb6c, tree:0x9ccc4a, field:0xdcb070,
+            recipe:{milk:2}, stick:{base:'#f9dc7c', dots:['#ef9a1a','#ffcf3a']}, seeds:['potato'], cow:true },
+  butter: { key:'butter', name:'じゃがバター', hex:'#c4621c', wall:0xd9792b, roof:0x8a3a1a, grass:0xcdd36e, tree:0xe5963a, field:0xd8a462,
+            recipe:{milk:1, parsley:1}, stick:{base:'#f5d98e', dots:['#a8642a','#3c9a32']}, seeds:['potato','parsley'], cow:true },
+};
+const DAYS = [
+  { goal:3, len:90,  flavor:'salad',  speed:1.15 },
+  { goal:5, len:95,  flavor:'salad',  speed:1.3 },
+  { goal:5, len:100, flavor:'cheese', speed:1.4, unlock:true },
+  { goal:7, len:105, flavor:'cheese', speed:1.5 },
+  { goal:7, len:110, flavor:'butter', speed:1.6, unlock:true },
+  { goal:9, len:120, flavor:'butter', speed:1.75 },
+].map((d, i) => ({ ...d, day:i+1, s2:d.goal*230, s3:d.goal*360 }));
+const DEMO_DAY = { goal:5, len:60, flavor:'salad', speed:1.15, day:1, s2:9e9, s3:9e9 };
+const CROPS = {
+  potato:  { name:'じゃがいも', grow:8, yield:2 },
+  carrot:  { name:'にんじん',   grow:6, yield:2 },
+  parsley: { name:'パセリ',     grow:5, yield:2 },
+};
+const ITEM = {
+  potato:{name:'じゃが', color:'#c98d3e'}, carrot:{name:'にんじん', color:'#f08a24'},
+  parsley:{name:'パセリ', color:'#2f8f2f'}, milk:{name:'ミルク', color:'#5aa9e6'},
+  seasoning:{name:'味パウダー', color:'#e3262b'},
+};
+const DEMO_SCRIPT = [ // [time, area, caption, sub]
+  [0,  0, 'タップで 植える・水やり', '畑の箱庭で じゃがいもを育てよう'],
+  [8,  0, '実ったら タップで収穫！', 'にんじん と パセリ も育つよ'],
+  [17, 1, 'にんじん＋パセリを ブレンド', 'サラダ味パウダーの完成！'],
+  [23, 1, 'タイミングよく タップでカット！', '真ん中の赤いゾーンが「ぴったり」'],
+  [30, 1, 'カップに ぴったり詰めて コンボ！', '8本そろうと 出荷準備OK'],
+  [36, 0, 'ときどき実る…？', 'まぼろしの ゴールデンポテト'],
+  [44, 1, 'どんどん 詰めて 出荷！', 'スワイプで 畑 ⇄ 工場'],
+  [55, 1, '夕方… トラックで出荷！', '1日の目標を クリアしよう'],
+];
+
+/* =====================================================================
+   SOUND (tiny synth, starts after first touch)
+   ===================================================================== */
+const Sfx = {
+  ctx:null, on:true,
+  init(){ if (this.ctx) { if (this.ctx.state === 'suspended') this.ctx.resume(); return; }
+    try { this.ctx = new (window.AudioContext || window.webkitAudioContext)(); } catch(e) {} },
+  tone(f, d=0.12, type='sine', v=0.16, f2=null, delay=0){
+    if (!this.on || !this.ctx) return;
+    const c = this.ctx, t = c.currentTime + delay, o = c.createOscillator(), g = c.createGain();
+    o.type = type; o.frequency.setValueAtTime(f, t);
+    if (f2) o.frequency.exponentialRampToValueAtTime(f2, t + d);
+    g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(v, t + 0.012);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + d);
+    o.connect(g); g.connect(c.destination); o.start(t); o.stop(t + d + 0.03);
+  },
+  noise(d=0.08, v=0.2, freq=2500, delay=0){
+    if (!this.on || !this.ctx) return;
+    const c = this.ctx, t = c.currentTime + delay, len = Math.floor(c.sampleRate * d);
+    const b = c.createBuffer(1, len, c.sampleRate), ch = b.getChannelData(0);
+    for (let i = 0; i < len; i++) ch[i] = (Math.random()*2-1) * (1 - i/len);
+    const s = c.createBufferSource(), f = c.createBiquadFilter(), g = c.createGain();
+    s.buffer = b; f.type = 'bandpass'; f.frequency.value = freq; g.gain.value = v;
+    s.connect(f); f.connect(g); g.connect(c.destination); s.start(t);
+  },
+  play(n, a=0){
+    switch(n){
+      case 'plant': this.tone(420,.09,'triangle',.14,700); break;
+      case 'water': this.noise(.25,.12,1800); this.tone(900,.08,'sine',.06,1300,.05); break;
+      case 'harvest': this.tone(660,.08,'square',.07); this.tone(990,.12,'square',.07,null,.07); break;
+      case 'cut': this.noise(.06,.35,3500); this.tone(180,.06,'square',.06,90); break;
+      case 'perfect': { const f = 700 * Math.pow(1.06, Math.min(a,14)); this.tone(f,.12,'triangle',.16); this.tone(f*1.5,.16,'sine',.1,null,.05); break; }
+      case 'good': this.tone(520,.1,'triangle',.12); break;
+      case 'miss': this.tone(240,.2,'sawtooth',.08,120); break;
+      case 'cup': [523,659,784,1046].forEach((f,i)=>this.tone(f,.14,'triangle',.13,null,i*.07)); break;
+      case 'pcup': [784,988,1175,1568,1976].forEach((f,i)=>this.tone(f,.16,'square',.07,null,i*.06)); break;
+      case 'blend': this.noise(.6,.12,600); this.tone(300,.5,'sawtooth',.04,520); break;
+      case 'milk': this.tone(500,.12,'sine',.14,380); break;
+      case 'legend': [523,659,784,1046,784,1046,1318].forEach((f,i)=>this.tone(f,.22,'square',.08,null,i*.09)); this.noise(.8,.08,6000,.1); break;
+      case 'horn': this.tone(370,.22,'square',.08); this.tone(370,.3,'square',.08,null,.28); break;
+      case 'click': this.tone(880,.05,'triangle',.08); break;
+      case 'start': [392,523,659,784].forEach((f,i)=>this.tone(f,.15,'triangle',.12,null,i*.09)); break;
+      case 'clear': [523,659,784,659,784,1046].forEach((f,i)=>this.tone(f,.2,'triangle',.13,null,i*.12)); break;
+    }
+  }
+};
+
+/* =====================================================================
+   THREE HELPERS
+   ===================================================================== */
+const toon = (c, o={}) => new THREE.MeshToonMaterial({ color:c, ...o });
+function mesh(geo, mat, x=0, y=0, z=0, parent=null, shadow=true){
+  const m = new THREE.Mesh(geo, mat); m.position.set(x, y, z);
+  m.castShadow = shadow; m.receiveShadow = true; if (parent) parent.add(m); return m;
+}
+function canvasTex(w, h, draw){
+  const c = document.createElement('canvas'); c.width = w; c.height = h;
+  draw(c.getContext('2d'), w, h);
+  const t = new THREE.CanvasTexture(c); t.anisotropy = 4; return t;
+}
+function circle(g, x, y, r){ g.beginPath(); g.arc(x, y, r, 0, Math.PI*2); g.fill(); }
+function stickTexture(fl){
+  return canvasTex(64, 256, (g, w, h) => {
+    g.fillStyle = fl.stick.base; g.fillRect(0, 0, w, h);
+    g.fillStyle = 'rgba(170,120,40,.16)'; for (let i = 0; i < 6; i++) g.fillRect(i*11+2, 0, 3, h);
+    for (let i = 0; i < 80; i++){ g.fillStyle = fl.stick.dots[i % 2]; circle(g, Math.random()*w, Math.random()*h, 1.4 + Math.random()*2.3); }
+  });
+}
+function cupTexture(fl){
+  return canvasTex(1024, 256, (g, w, h) => {
+    g.fillStyle = fl.hex; g.fillRect(0, 0, w, h);
+    g.fillStyle = 'rgba(255,255,255,.10)'; for (let x = -h; x < w; x += 40){ g.beginPath(); g.moveTo(x,h); g.lineTo(x+h,0); g.lineTo(x+h+16,0); g.lineTo(x+16,h); g.fill(); }
+    g.fillStyle = '#fff6d8'; g.fillRect(0, 0, w, 22); g.fillStyle = fl.hex; g.fillRect(0, 22, w, 4);
+    for (let k = 0; k < 2; k++){
+      const cx = w * (0.25 + 0.5*k);
+      g.fillStyle = '#fff3c4'; g.beginPath(); g.ellipse(cx, h*0.58, 150, 90, 0, 0, Math.PI*2); g.fill();
+      g.textAlign = 'center'; g.lineJoin = 'round';
+      g.font = '64px "Dela Gothic One", sans-serif'; g.lineWidth = 14; g.strokeStyle = '#ffd31a';
+      g.strokeText('じゃが', cx, h*0.56); g.fillStyle = '#e3262b'; g.fillText('じゃが', cx, h*0.56);
+      g.font = '900 38px "M PLUS Rounded 1c", sans-serif'; g.fillStyle = fl.hex; g.fillText(fl.name, cx, h*0.82);
+    }
+  });
+}
+function signTexture(fl){
+  return canvasTex(512, 128, (g, w, h) => {
+    g.fillStyle = '#fff4cf'; g.fillRect(0, 0, w, h);
+    g.fillStyle = '#e3262b'; g.fillRect(8, 8, w-16, h-16);
+    g.textAlign = 'center'; g.lineJoin = 'round';
+    g.font = '50px "Dela Gothic One", sans-serif'; g.lineWidth = 10; g.strokeStyle = '#ffd31a';
+    g.strokeText('じゃがスティック工場', w/2, 72); g.fillStyle = '#fff'; g.fillText('じゃがスティック工場', w/2, 72);
+    g.font = '900 22px "M PLUS Rounded 1c", sans-serif'; g.fillStyle = '#fff4cf'; g.fillText(fl.name + '味 製造中', w/2, 108);
+  });
+}
+function farmSignTexture(){
+  return canvasTex(256, 128, (g, w, h) => {
+    g.fillStyle = '#9a6a38'; g.fillRect(0, 0, w, h); g.fillStyle = '#fff4cf'; g.fillRect(8, 8, w-16, h-16);
+    g.textAlign = 'center'; g.font = '46px "Dela Gothic One", sans-serif'; g.fillStyle = '#1f8a3c'; g.fillText('じゃが畑', w/2, 82);
+  });
+}
+function stripeTexture(vertical){
+  const t = canvasTex(128, 128, (g, w, h) => {
+    g.fillStyle = '#4a4f4a'; g.fillRect(0, 0, w, h); g.fillStyle = '#666c66';
+    for (let i = 0; i < 4; i++){ if (vertical) g.fillRect(0, i*32, w, 12); else g.fillRect(i*32, 0, 12, h); }
+  });
+  t.wrapS = t.wrapT = THREE.RepeatWrapping; return t;
+}
+const ICONS = {};
+function iconMat(kind){
+  if (ICONS[kind]) return ICONS[kind];
+  const t = canvasTex(128, 128, (g) => {
+    g.fillStyle = 'rgba(0,0,0,.18)'; circle(g, 66, 60, 46);
+    g.fillStyle = kind === 'gold' ? '#fff2a8' : '#fff'; circle(g, 64, 56, 46);
+    g.beginPath(); g.moveTo(52, 96); g.lineTo(76, 96); g.lineTo(64, 118); g.fill();
+    g.lineWidth = 6; g.strokeStyle = kind === 'gold' ? '#d48a00' : '#1f8a3c'; g.beginPath(); g.arc(64, 56, 46, 0, Math.PI*2); g.stroke();
+    if (kind === 'drop'){ g.fillStyle = '#3fa3ff'; g.beginPath(); g.moveTo(64, 22); g.bezierCurveTo(90, 56, 88, 84, 64, 84); g.bezierCurveTo(40, 84, 38, 56, 64, 22); g.fill(); g.fillStyle = '#bfe3ff'; circle(g, 56, 66, 6); }
+    if (kind === 'potato'){ g.fillStyle = '#c98d3e'; g.beginPath(); g.ellipse(64, 58, 28, 22, -0.3, 0, 7); g.fill(); g.fillStyle = '#8a5a20'; circle(g,54,52,3); circle(g,70,64,3); circle(g,72,48,3); }
+    if (kind === 'carrot'){ g.fillStyle = '#f08a24'; g.beginPath(); g.moveTo(44, 40); g.lineTo(84, 40); g.lineTo(64, 90); g.fill(); g.fillStyle = '#3c9a32'; g.beginPath(); g.ellipse(56,30,6,14,-.4,0,7); g.ellipse(72,30,6,14,.4,0,7); g.fill(); }
+    if (kind === 'parsley'){ g.fillStyle = '#2f8f2f'; [[64,40],[50,54],[78,54],[58,68],[72,68],[64,54]].forEach(([x,y])=>circle(g,x,y,12)); g.fillStyle='#6cc04a'; circle(g,60,46,5); }
+    if (kind === 'milk'){ g.fillStyle = '#e8f4ff'; g.fillRect(48, 38, 32, 46); g.fillStyle = '#3fa3ff'; g.fillRect(52, 26, 24, 14); g.fillStyle = '#3fa3ff'; g.fillRect(48, 56, 32, 10); }
+    if (kind === 'gold'){ g.fillStyle = '#ffbf00'; g.beginPath(); for (let i = 0; i < 10; i++){ const a = -Math.PI/2 + i*Math.PI/5, r = i%2 ? 15 : 34; g.lineTo(64+Math.cos(a)*r, 58+Math.sin(a)*r); } g.fill(); }
+  });
+  return ICONS[kind] = new THREE.SpriteMaterial({ map:t });
+}
+const lerp = (a, b, k) => a + (b - a) * k;
+const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+const ease = k => 1 - Math.pow(1 - k, 3);
+const GEOS = {}, MATS = {};
+const GEO = (k, f) => GEOS[k] || (GEOS[k] = f());
+const MAT = (c, o={}) => { const k = c + JSON.stringify(o); return MATS[k] || (MATS[k] = toon(c, o)); };
+
+/* =====================================================================
+   GAME ENGINE
+   ===================================================================== */
+class Game {
+  constructor(canvas, fxLayer, wrap){
+    this.canvas = canvas; this.fx = fxLayer; this.wrap = wrap;
+    this.ev = {}; this.parts = []; this.tweens = []; this.t = 0; this.paused = false;
+    const r = this.renderer = new THREE.WebGLRenderer({ canvas, antialias:true });
+    r.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+    r.shadowMap.enabled = true; r.shadowMap.type = THREE.PCFSoftShadowMap;
+    this.scene = new THREE.Scene();
+    this.skyCol = new THREE.Color(0x9fdcff);
+    this.scene.background = this.skyCol; this.scene.fog = new THREE.Fog(0x9fdcff, 40, 85);
+    this.camera = new THREE.PerspectiveCamera(36, 1, 0.5, 200);
+    this.hemi = new THREE.HemisphereLight(0xffffff, 0x7a9a50, 0.62); this.scene.add(this.hemi);
+    const sun = this.sun = new THREE.DirectionalLight(0xffffff, 0.85);
+    sun.castShadow = true; sun.shadow.mapSize.set(1024, 1024);
+    Object.assign(sun.shadow.camera, { left:-10, right:10, top:10, bottom:-10, near:1, far:60 });
+    sun.shadow.bias = -0.0008; this.scene.add(sun, sun.target);
+    this.ray = new THREE.Raycaster(); this.camX = 0; this.hits = [];
+    this.flavorMats = {};
+    this.build();
+    this.resize(); window.addEventListener('resize', () => this.resize());
+    this.bindInput();
+    this.last = performance.now(); this.snapT = 0;
+    this.loop = this.loop.bind(this); requestAnimationFrame(this.loop);
+    document.addEventListener('visibilitychange', () => { if (document.hidden && this.s && this.s.mode === 'play') this.setPaused(true); });
+  }
+  on(n, f){ (this.ev[n] = this.ev[n] || []).push(f); }
+  emit(n, d){ (this.ev[n] || []).forEach(f => f(d)); }
+
+  /* ---------------- scene building ---------------- */
+  build(){
+    const S = this.scene;
+    // ground + road
+    this.groundMat = toon(0x9fd46c);
+    mesh(new THREE.PlaneGeometry(160, 90), this.groundMat, 13, 0, 0, S, false).rotation.x = -Math.PI/2;
+    const road = mesh(new THREE.PlaneGeometry(FX + 60, 2.2), toon(0xe2c48a), FX/2 + 10, 0.02, 5.3, S, false); road.rotation.x = -Math.PI/2;
+    for (let x = -8; x < FX + 40; x += 2.2) mesh(new THREE.PlaneGeometry(0.9, 0.12), toon(0xfff4cf), x, 0.03, 5.3, S, false).rotation.x = -Math.PI/2;
+    this.trees = []; this.treeMat = toon(0x4caf50); this.treeMat2 = toon(0x3e9a46);
+    const trunkM = toon(0x8a5a2b);
+    const tree = (x, z, s=1) => {
+      const g = new THREE.Group(); g.position.set(x, 0, z); g.scale.setScalar(s); S.add(g);
+      mesh(new THREE.CylinderGeometry(0.16, 0.22, 1, 6), trunkM, 0, 0.5, 0, g);
+      mesh(new THREE.SphereGeometry(0.8, 10, 8), this.treeMat, 0, 1.5, 0, g);
+      mesh(new THREE.SphereGeometry(0.55, 10, 8), this.treeMat2, 0.35, 2.05, 0.1, g);
+      g.userData.ph = Math.random()*6; this.trees.push(g);
+    };
+    [[-5.8,-2],[-6.2,2.2],[5.9,-1.2],[6.3,2.6],[-5.2,-5.6],[5.2,-6],[-1.8,-7],[2.8,-7.2],[-7.5,-6],
+     [8.5,-3],[10,-5.5],[12,-2.6],[14,-6],[16,-3.4],[18.2,-5.8],[20,-2.8],[9.5,7.5],[13,8],[17,7.4],[21,8.2],
+     [FX-6.4,-2.5],[FX-6.8,2.6],[FX+6.6,-1.5],[FX+6.8,2.4],[FX+8,-6],[FX-8.5,-6]].forEach(([x,z]) => tree(x, z, 0.85 + Math.random()*0.4));
+    // flowers
+    const fcols = [0xff7aa8, 0xffd31a, 0xffffff, 0xff8a3c];
+    const fg = new THREE.SphereGeometry(0.1, 6, 5);
+    for (let i = 0; i < 70; i++){
+      const x = -6 + Math.random()*(FX + 12), z = Math.random() < 0.5 ? 6.8 + Math.random()*3 : -5 - Math.random()*3;
+      if (Math.abs(x) < 4.5 || Math.abs(x - FX) < 6) continue;
+      mesh(fg, toon(fcols[i % 4]), x, 0.1, z, S, false);
+    }
+    // clouds
+    this.clouds = [];
+    const cm = toon(0xffffff);
+    for (let i = 0; i < 9; i++){
+      const g = new THREE.Group(); g.position.set(-10 + i*6, 9 + Math.random()*3, -10 - Math.random()*8); S.add(g);
+      for (let k = 0; k < 4; k++) mesh(new THREE.SphereGeometry(0.9 + Math.random()*0.6, 10, 8), cm, k*1.1 - 1.6, Math.random()*0.5, Math.random()*0.6, g, false);
+      g.userData.v = 0.3 + Math.random()*0.4; this.clouds.push(g);
+    }
+    this.buildFarm(); this.buildFactory(); this.buildChars();
+  }
+
+  /* ---------------- characters ---------------- */
+  makeChar(kind){
+    const g = new THREE.Group(), body = new THREE.Group(), prim = new THREE.Group();
+    g.add(body); body.add(prim);
+    const potato = kind === 'potato';
+    const skin = toon(potato ? 0xdcae62 : 0xf08a24);
+    if (potato){
+      const b = mesh(new THREE.SphereGeometry(0.42, 16, 12), skin, 0, 0.66, 0, prim); b.scale.set(1, 1.12, 0.9);
+      [[-0.22,0.9,0.28],[0.25,0.5,0.3],[0.3,0.95,0.2],[-0.3,0.45,0.25]].forEach(([x,y,z]) => mesh(new THREE.SphereGeometry(0.035, 6, 4), toon(0x9a6a2a), x, y, z, prim, false));
+      [[0,1.18,0,0.12],[-0.1,1.12,0.06,0.09],[0.11,1.13,-0.03,0.09]].forEach(([x,y,z,r]) => mesh(new THREE.IcosahedronGeometry(r, 0), toon(0x3c9a32), x, y, z, prim));
+      mesh(new THREE.CylinderGeometry(0.015, 0.015, 0.12, 4), toon(0x2e7a2a), 0, 1.08, 0, prim, false);
+    } else {
+      const b = mesh(new THREE.ConeGeometry(0.4, 1.05, 16), skin, 0, 0.62, 0, prim); b.rotation.x = Math.PI;
+      for (let k = 0; k < 3; k++){ const r = mesh(new THREE.TorusGeometry(0.3 - k*0.08, 0.012, 4, 20), toon(0xd06a10), 0, 0.85 - k*0.22, 0, prim, false); r.rotation.x = Math.PI/2; }
+      mesh(new THREE.CylinderGeometry(0.3, 0.32, 0.26, 16), toon(0xffffff), 0, 1.24, 0, prim);
+      mesh(new THREE.SphereGeometry(0.33, 14, 10), toon(0xffffff), 0, 1.42, 0, prim).scale.set(1, 0.6, 1);
+      for (let k = 0; k < 3; k++){ const l = mesh(new THREE.ConeGeometry(0.05, 0.3, 5), toon(0x3c9a32), (k-1)*0.12, 1.12, -0.22, prim, false); l.rotation.x = -0.6; }
+    }
+    // face
+    const fz = potato ? 0.36 : 0.3, fy = potato ? 0.78 : 0.95;
+    const eyes = [];
+    [-0.12, 0.12].forEach(x => {
+      const e = new THREE.Group(); e.position.set(x, fy, fz); prim.add(e); eyes.push(e);
+      mesh(new THREE.SphereGeometry(0.07, 10, 8), toon(0x2a1a0a), 0, 0, 0, e, false);
+      mesh(new THREE.SphereGeometry(0.025, 6, 4), toon(0xffffff, { emissive:0x888888 }), 0.02, 0.025, 0.055, e, false);
+      mesh(new THREE.SphereGeometry(0.06, 8, 6), toon(0xff8a9a), x * 1.7, -0.11, -0.01, e, false).scale.set(1, 0.6, 0.4);
+    });
+    const mouth = mesh(new THREE.TorusGeometry(0.06, 0.018, 6, 12, Math.PI), toon(0xc0302a), 0, fy - 0.12, fz + 0.01, prim, false); mouth.rotation.z = Math.PI;
+    // limbs
+    const limb = toon(potato ? 0xc99a50 : 0xe07a18), shoe = toon(potato ? 0xe3262b : 0x1f8a3c);
+    const arm = (side) => {
+      const a = new THREE.Group(); a.position.set(side * (potato ? 0.4 : 0.34), potato ? 0.72 : 0.92, 0); prim.add(a);
+      mesh(new THREE.CylinderGeometry(0.04, 0.04, 0.3, 6), limb, 0, -0.15, 0, a, false);
+      const hand = new THREE.Group(); hand.position.y = -0.32; a.add(hand);
+      mesh(new THREE.SphereGeometry(0.07, 8, 6), toon(0xffffff), 0, 0, 0, hand, false);
+      a.rotation.z = side * 0.35; return { a, hand };
+    };
+    const leg = (side) => {
+      const l = new THREE.Group(); l.position.set(side * 0.15, 0.28, 0); prim.add(l);
+      mesh(new THREE.CylinderGeometry(0.045, 0.045, 0.22, 6), limb, 0, -0.1, 0, l, false);
+      mesh(new THREE.SphereGeometry(0.09, 8, 6), shoe, 0, -0.22, 0.04, l).scale.set(1, 0.6, 1.4);
+      return l;
+    };
+    const L = arm(-1), R = arm(1);
+    const c = { g, body, prim, eyes, armL:L.a, armR:R.a, hand:R.hand, legL:leg(-1), legR:leg(1), tools:{},
+      target:new THREE.Vector3(), home:new THREE.Vector3(), speed:9, walk:0, act:null, actT:0, queued:null, idleT:0, face:0, jump:0 };
+    // tools held in the right hand
+    const tool = (name, build) => { const t = new THREE.Group(); build(t); t.visible = false; R.hand.add(t); c.tools[name] = t; };
+    tool('can', t => { mesh(new THREE.CylinderGeometry(0.11, 0.13, 0.2, 10), toon(0x3fa3ff), 0, -0.08, 0.06, t); const sp = mesh(new THREE.CylinderGeometry(0.02, 0.03, 0.26, 6), toon(0x3fa3ff), 0, -0.02, 0.24, t); sp.rotation.x = 1.1; });
+    tool('bag', t => { mesh(new THREE.BoxGeometry(0.18, 0.22, 0.1), toon(0xfff4cf), 0, -0.1, 0.05, t); mesh(new THREE.BoxGeometry(0.19, 0.06, 0.11), toon(0x3c9a32), 0, -0.04, 0.05, t, false); });
+    tool('basket', t => { mesh(new THREE.CylinderGeometry(0.16, 0.12, 0.14, 10, 1, true), toon(0xb07a45, { side:THREE.DoubleSide }), 0, -0.1, 0.05, t); [[-0.05,0],[0.05,0.03],[0,-0.04]].forEach(([x,z]) => mesh(new THREE.SphereGeometry(0.06, 6, 5), toon(0xd9a95b), x, -0.04, 0.05 + z, t, false)); });
+    tool('knife', t => { mesh(new THREE.BoxGeometry(0.05, 0.08, 0.05), toon(0x8a5a2b), 0, -0.02, 0.04, t, false); mesh(new THREE.BoxGeometry(0.02, 0.1, 0.3), toon(0xdfe8ee, { emissive:0x333a40 }), 0, -0.02, 0.22, t, false); });
+    return c;
+  }
+  buildChars(){
+    const f = this.potaKun = this.makeChar('potato');
+    f.home.set(1.25, 0.48, 3.7); f.g.position.copy(f.home); f.target.copy(f.home); f.g.scale.setScalar(1.7); this.farm.add(f.g);
+    const k = this.caroChan = this.makeChar('carrot');
+    k.g.scale.setScalar(1.55);
+    k.home.set(-0.35, 0.2, 0.1); k.g.position.copy(k.home); k.target.copy(k.home); k.face = 0.35; k.speed = 7; this.fac.add(k.g);
+    k.tools.knife.visible = true; k.keepTool = 'knife';
+    [['farm', f], ['factory', k]].forEach(([key, ch]) => { if (CHARACTER_GLB[key]) this.loadGLB(CHARACTER_GLB[key], ch); });
+  }
+  loadGLB(url, ch){
+    const go = () => {
+      try {
+        new THREE.GLTFLoader().load(url, gltf => {
+          const m = gltf.scene, box = new THREE.Box3().setFromObject(m), size = box.getSize(new THREE.Vector3());
+          const sc = 1.25 / Math.max(size.y, 0.001); m.scale.setScalar(sc);
+          m.position.y = -box.min.y * sc; m.traverse(o => { if (o.isMesh){ o.castShadow = true; } });
+          ch.prim.children.forEach(o => { if (o !== ch.armR) o.visible = false; });
+          ch.armR.children.forEach(o => { if (o !== ch.hand) o.visible = false; });
+          ch.body.add(m); ch.glb = true;
+        }, undefined, () => {});
+      } catch(e) {}
+    };
+    if (THREE.GLTFLoader) return go();
+    const sc = document.createElement('script'); sc.src = 'https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js';
+    sc.onload = go; document.head.appendChild(sc);
+  }
+  charDo(ch, pos, act){
+    if (pos) ch.target.copy(pos);
+    ch.queued = act; ch.idleT = 0;
+    if (!pos){ ch.act = act; ch.actT = 0; ch.queued = null; }
+  }
+  updateChar(c, dt, t){
+    const pos = c.g.position, d = new THREE.Vector3(c.target.x - pos.x, 0, c.target.z - pos.z), dist = d.length();
+    let walking = false;
+    if (dist > 0.04){
+      walking = true; pos.addScaledVector(d.normalize(), Math.min(dist, c.speed * dt));
+      const ang = Math.atan2(d.x, d.z); let diff = ang - c.g.rotation.y; diff = Math.atan2(Math.sin(diff), Math.cos(diff));
+      c.g.rotation.y += diff * Math.min(1, dt * 14); c.walk += dt * 18;
+    } else {
+      if (c.queued){ c.act = c.queued; c.actT = 0; c.queued = null; }
+      let diff = c.face - c.g.rotation.y; diff = Math.atan2(Math.sin(diff), Math.cos(diff)); c.g.rotation.y += diff * Math.min(1, dt * 6);
+      if (!c.act && !c.waving){ c.idleT += dt; if (c.idleT > 2.2 && pos.distanceTo(c.home) > 0.1) c.target.copy(c.home); }
+    }
+    // reset pose
+    const sw = walking ? Math.sin(c.walk) : 0;
+    c.legL.rotation.x = sw * 0.8; c.legR.rotation.x = -sw * 0.8;
+    c.armL.rotation.set(-sw * 0.7, 0, -0.35); c.armR.rotation.set(sw * 0.7, 0, 0.35);
+    let by = walking ? Math.abs(Math.sin(c.walk)) * 0.07 : Math.sin(t * 2.5) * 0.015;
+    c.body.rotation.set(0, 0, walking ? 0 : Math.sin(t * 1.8) * 0.04);
+    Object.keys(c.tools).forEach(k => { c.tools[k].visible = k === c.keepTool; c.tools[k].rotation.set(0, 0, 0); });
+    if (c.act){
+      c.actT += dt; const dur = c.act === 'cheer' ? 0.8 : c.act === 'chop' ? 0.22 : 0.55, k = Math.min(1, c.actT / dur), s = Math.sin(k * Math.PI);
+      switch (c.act){
+        case 'water': c.tools.can.visible = true; c.armR.rotation.x = -1.2; c.tools.can.rotation.x = 0.4 + s * 0.7; c.body.rotation.x = s * 0.15; break;
+        case 'plant': c.tools.bag.visible = true; by -= s * 0.18; c.armR.rotation.x = -0.8 * s; c.armL.rotation.x = -0.8 * s; c.body.rotation.x = s * 0.35; break;
+        case 'harvest': c.tools.basket.visible = true; by += s * 0.55; c.armR.rotation.z = 0.35 + s * 2.3; c.armL.rotation.z = -0.35 - s * 2.3; break;
+        case 'chop': c.armR.rotation.x = k < 0.35 ? lerp(0, -2.6, k / 0.35) : lerp(-2.6, -0.7, (k - 0.35) / 0.65); c.body.rotation.x = s * 0.2; break;
+        case 'press': c.armR.rotation.x = -1.5; c.armL.rotation.x = -1.5; c.body.rotation.x = 0.25 * s; by -= s * 0.08; break;
+        case 'cheer': by += Math.abs(Math.sin(k * Math.PI * 2)) * 0.5; c.armR.rotation.z = 2.6; c.armL.rotation.z = -2.6; c.body.rotation.y = k * Math.PI * 2; break;
+      }
+      if (k >= 1) c.act = null;
+    }
+    if (c.waving){ c.armR.rotation.z = 2.5 + Math.sin(t * 14) * 0.4; by += Math.abs(Math.sin(t * 7)) * 0.12; }
+    c.body.position.y = by;
+    const blink = (t * 0.7 + (c === this.caroChan ? 0.4 : 0)) % 3.2 < 0.12 ? 0.15 : 1;
+    c.eyes.forEach(e => { e.scale.y = blink; });
+  }
+
+  buildFarm(){
+    const S = this.scene, F = this.farm = new THREE.Group(); S.add(F);
+    this.fieldMat = toon(0xd2a868);
+    mesh(new THREE.BoxGeometry(7.9, 0.25, 7.9), this.fieldMat, 0, 0.12, 0, F);
+    this.plots = [];
+    for (let i = 0; i < 9; i++){
+      const x = (i % 3 - 1) * 2.45, z = (Math.floor(i / 3) - 1) * 2.45;
+      const soilMat = toon(0x9a6a38);
+      const base = mesh(new THREE.BoxGeometry(2.1, 0.32, 2.1), soilMat, x, 0.32, z, F);
+      for (let k = -1; k <= 1; k++) mesh(new THREE.BoxGeometry(1.9, 0.08, 0.22), toon(0x7d5228), x, 0.5, z + k*0.6, F, false);
+      const cropG = new THREE.Group(); cropG.position.set(x, 0.5, z); F.add(cropG);
+      const icon = new THREE.Sprite(iconMat('drop')); icon.scale.set(0.95, 0.95, 1); icon.position.set(x, 2.1, z); icon.visible = false; F.add(icon);
+      const hit = new THREE.Mesh(new THREE.BoxGeometry(2.35, 1.6, 2.35), new THREE.MeshBasicMaterial({ visible:false }));
+      hit.position.set(x, 0.9, z); hit.userData = { plot:i }; F.add(hit); this.hits.push(hit);
+      this.plots.push({ i, x, z, soilMat, base, cropG, icon, state:'empty', type:'potato', prog:0, golden:false, watered2:false, visKey:'' });
+    }
+    // fence
+    const fm = toon(0xfff4cf);
+    for (let k = -4; k <= 4; k++){
+      [[k*0.98, -4.3], [-4.3, k*0.98], [4.3, k*0.98]].forEach(([x, z]) => mesh(new THREE.CylinderGeometry(0.1, 0.1, 0.9, 8), this.stickMat('salad').stick, x, 0.45, z, F));
+    }
+    mesh(new THREE.BoxGeometry(8.6, 0.1, 0.08), fm, 0, 0.5, -4.3, F); mesh(new THREE.BoxGeometry(0.08, 0.1, 8.6), fm, -4.3, 0.5, 0, F); mesh(new THREE.BoxGeometry(0.08, 0.1, 8.6), fm, 4.3, 0.5, 0, F);
+    // barn
+    const barn = new THREE.Group(); barn.position.set(-3.3, 0, -5.6); F.add(barn);
+    mesh(new THREE.BoxGeometry(2.6, 1.8, 2), toon(0xd8322e), 0, 0.9, 0, barn);
+    const rm = toon(0xfff4cf);
+    const r1 = mesh(new THREE.BoxGeometry(1.6, 0.14, 2.2), rm, -0.62, 2.15, 0, barn); r1.rotation.z = 0.62;
+    const r2 = mesh(new THREE.BoxGeometry(1.6, 0.14, 2.2), rm, 0.62, 2.15, 0, barn); r2.rotation.z = -0.62;
+    mesh(new THREE.BoxGeometry(0.9, 1.1, 0.05), toon(0xfff4cf), 0, 0.55, 1.01, barn);
+    mesh(new THREE.CylinderGeometry(0.55, 0.55, 2.6, 14), toon(0xffd31a), 1.9, 1.3, 0, barn);
+    mesh(new THREE.SphereGeometry(0.55, 14, 8, 0, Math.PI*2, 0, Math.PI/2), toon(0xe3262b), 1.9, 2.6, 0, barn);
+    // windmill
+    const wm = new THREE.Group(); wm.position.set(3.4, 0, -5.4); F.add(wm);
+    mesh(new THREE.CylinderGeometry(0.45, 0.8, 2.8, 8), toon(0xfff4cf), 0, 1.4, 0, wm);
+    mesh(new THREE.ConeGeometry(0.65, 0.8, 8), toon(0xe3262b), 0, 3.2, 0, wm);
+    this.blades = new THREE.Group(); this.blades.position.set(0, 2.6, 0.62); wm.add(this.blades);
+    for (let k = 0; k < 4; k++){ const b = mesh(new THREE.BoxGeometry(0.34, 1.7, 0.05), toon(0xffffff), 0, 0.9, 0, null); const p = new THREE.Group(); p.rotation.z = k*Math.PI/2; p.add(b); this.blades.add(p); }
+    mesh(new THREE.SphereGeometry(0.14, 8, 6), toon(0xffd31a), 0, 0, 0.06, this.blades);
+    // sign
+    const sg = new THREE.Group(); sg.position.set(-3.2, 0, 4.4); F.add(sg);
+    mesh(new THREE.BoxGeometry(0.12, 1, 0.12), toon(0x8a5a2b), 0, 0.5, 0, sg);
+    mesh(new THREE.BoxGeometry(1.5, 0.75, 0.08), new THREE.MeshToonMaterial({ map:farmSignTexture() }), 0, 1.1, 0.04, sg);
+    // cow
+    const cow = this.cow = new THREE.Group(); cow.position.set(0.6, 0, -5.7); F.add(cow);
+    const spot = canvasTex(128, 64, (g) => { g.fillStyle = '#fff'; g.fillRect(0,0,128,64); g.fillStyle = '#222'; [[20,20,12],[70,40,16],[105,15,10],[45,52,9]].forEach(([x,y,r]) => circle(g,x,y,r)); });
+    const body = new THREE.Group(); cow.add(body); this.cowBody = body;
+    mesh(new THREE.BoxGeometry(1.4, 0.8, 0.8), new THREE.MeshToonMaterial({ map:spot }), 0, 0.85, 0, body);
+    mesh(new THREE.BoxGeometry(0.55, 0.55, 0.6), toon(0xffffff), 0.85, 1.1, 0, body);
+    mesh(new THREE.BoxGeometry(0.3, 0.25, 0.5), toon(0xffb3b3), 1.15, 1.0, 0, body);
+    [[-0.12,0.18],[ -0.12,-0.18]].forEach(([dx,dz]) => mesh(new THREE.ConeGeometry(0.07, 0.22, 6), toon(0xfff4cf), 0.85+dx, 1.45, dz, body));
+    [[-0.5,-0.28],[-0.5,0.28],[0.5,-0.28],[0.5,0.28]].forEach(([x,z]) => mesh(new THREE.BoxGeometry(0.18, 0.5, 0.18), toon(0xffffff), x, 0.25, z, cow));
+    this.cowIcon = new THREE.Sprite(iconMat('milk')); this.cowIcon.scale.set(0.9, 0.9, 1); this.cowIcon.position.set(0.6, 2.4, -5.7); F.add(this.cowIcon);
+    const cowHit = new THREE.Mesh(new THREE.BoxGeometry(2.2, 2.4, 1.6), new THREE.MeshBasicMaterial({ visible:false }));
+    cowHit.position.set(0.6, 1.1, -5.7); cowHit.userData = { cow:true }; F.add(cowHit); this.hits.push(cowHit); this.cowHit = cowHit;
+    // flavor decor
+    this.cheeseDecor = new THREE.Group(); F.add(this.cheeseDecor);
+    [[-5,3.2],[5,3.6],[5.2,-3.2]].forEach(([x,z],i) => { const w = mesh(new THREE.CylinderGeometry(0.55, 0.55, 0.45, 18, 1, false, 0, Math.PI*1.7), toon(0xffcf3a), x, 0.23, z, this.cheeseDecor); w.rotation.y = i; });
+    this.butterDecor = new THREE.Group(); F.add(this.butterDecor);
+    mesh(new THREE.CylinderGeometry(0.45, 0.55, 1.1, 12), toon(0xb07a45), 5, 0.55, 3.4, this.butterDecor);
+    mesh(new THREE.CylinderGeometry(0.05, 0.05, 1.2, 6), toon(0x8a5a2b), 5, 1.4, 3.4, this.butterDecor);
+    mesh(new THREE.BoxGeometry(0.8, 0.45, 0.55), toon(0xffe27a), -5, 0.23, 3.2, this.butterDecor);
+    [[-5.3,-3.4],[5.3,-3.2]].forEach(([x,z]) => { for (let k = 0; k < 3; k++) mesh(new THREE.ConeGeometry(0.12, 0.9, 5), toon(0xe0b04a), x + k*0.25, 0.45, z, this.butterDecor); });
+  }
+
+  buildFactory(){
+    const S = this.scene, G = this.fac = new THREE.Group(); G.position.x = FX; S.add(G);
+    const tile = canvasTex(256, 256, (g, w) => { g.fillStyle = '#efe4c4'; g.fillRect(0,0,w,w); g.strokeStyle = '#d9caa0'; g.lineWidth = 4; for (let i = 0; i <= 4; i++){ g.beginPath(); g.moveTo(i*64,0); g.lineTo(i*64,w); g.stroke(); g.beginPath(); g.moveTo(0,i*64); g.lineTo(w,i*64); g.stroke(); } });
+    tile.wrapS = tile.wrapT = THREE.RepeatWrapping; tile.repeat.set(6, 4.5);
+    mesh(new THREE.BoxGeometry(12, 0.2, 9.2), new THREE.MeshToonMaterial({ map:tile }), 0, 0.1, -0.3, G);
+    // building
+    this.wallMat = toon(0x2a9a48); this.roofMat = toon(0xe3262b);
+    mesh(new THREE.BoxGeometry(12.4, 4.6, 0.8), this.wallMat, 0, 2.3, -5.0, G);
+    mesh(new THREE.BoxGeometry(12.4, 0.5, 0.9), toon(0xfff4cf), 0, 1.2, -4.95, G);
+    const roof = mesh(new THREE.BoxGeometry(12.8, 0.3, 2.2), this.roofMat, 0, 4.8, -5.3, G); roof.rotation.x = 0.35;
+    const wl = toon(0xfff2a8, { emissive:0x6a5000 });
+    for (let k = -2; k <= 2; k++) mesh(new THREE.BoxGeometry(1.1, 0.8, 0.1), wl, k*2.3, 2.9, -4.58, G, false);
+    this.signMat = new THREE.MeshToonMaterial({ map:signTexture(FLAVORS.salad) });
+    mesh(new THREE.BoxGeometry(5.6, 1.4, 0.15), this.signMat, 0, 4.1, -4.45, G);
+    // chimney + steam source
+    const ch = new THREE.Group(); ch.position.set(4.4, 0, -5.2); G.add(ch);
+    mesh(new THREE.CylinderGeometry(0.42, 0.55, 3.6, 12), toon(0xfff4cf), 0, 6.2, 0, ch);
+    mesh(new THREE.CylinderGeometry(0.46, 0.46, 0.4, 12), toon(0xe3262b), 0, 7.4, 0, ch);
+    mesh(new THREE.CylinderGeometry(0.46, 0.46, 0.4, 12), toon(0xe3262b), 0, 6.3, 0, ch);
+    mesh(new THREE.CylinderGeometry(0.3, 0.4, 2.2, 10), toon(0xfff4cf), -8.4, 6, 0, ch);
+    this.steamSrc = [new THREE.Vector3(FX + 4.4, 8.1, -5.2), new THREE.Vector3(FX - 4.0, 7.2, -5.2)];
+    this.steamT = 0;
+    // hopper
+    const hop = new THREE.Group(); hop.position.set(-3.8, 0, -1.2); G.add(hop);
+    [[-0.45,-0.45],[0.45,-0.45],[-0.45,0.45],[0.45,0.45]].forEach(([x,z]) => mesh(new THREE.BoxGeometry(0.12, 1.6, 0.12), toon(0x888f88), x, 0.8, z, hop));
+    mesh(new THREE.CylinderGeometry(0.9, 0.35, 1.0, 12, 1, true), toon(0xffd31a, { side:THREE.DoubleSide }), 0, 2.0, 0, hop);
+    // belts
+    const legM = toon(0x7d847d), sideM = toon(0x2a9a48);
+    this.belt1Tex = stripeTexture(false); this.belt1Tex.repeat.set(5, 1);
+    const b1 = mesh(new THREE.BoxGeometry(4.5, 0.3, 1.0), [sideM, sideM, new THREE.MeshToonMaterial({ map:this.belt1Tex }), sideM, sideM, sideM], -1.35, 0.6, -1.2, G);
+    this.belt2Tex = stripeTexture(true); this.belt2Tex.repeat.set(1, 5);
+    mesh(new THREE.BoxGeometry(1.1, 0.3, 4.8), [sideM, sideM, new THREE.MeshToonMaterial({ map:this.belt2Tex }), sideM, sideM, sideM], 2.0, 0.6, 1.0, G);
+    [[-3.3,-1.2],[0.6,-1.2],[2,-1.2],[2,1],[2,3.2]].forEach(([x,z]) => mesh(new THREE.BoxGeometry(0.15, 0.45, 0.9), legM, x, 0.22, z, G));
+    this.sideMat = sideM;
+    // cutter
+    const cut = new THREE.Group(); cut.position.set(0.6, 0, -1.2); G.add(cut);
+    mesh(new THREE.BoxGeometry(0.16, 2.0, 0.16), toon(0xe3262b), 0, 1.4, -0.65, cut);
+    mesh(new THREE.BoxGeometry(0.16, 2.0, 0.16), toon(0xe3262b), 0, 1.4, 0.65, cut);
+    const hz = canvasTex(128, 32, (g) => { for (let i = 0; i < 8; i++){ g.fillStyle = i%2 ? '#222' : '#ffd31a'; g.beginPath(); g.moveTo(i*16,32); g.lineTo(i*16+16,0); g.lineTo(i*16+32,0); g.lineTo(i*16+16,32); g.fill(); } });
+    mesh(new THREE.BoxGeometry(0.3, 0.3, 1.6), new THREE.MeshToonMaterial({ map:hz }), 0, 2.45, 0, cut);
+    this.blade = mesh(new THREE.BoxGeometry(0.08, 0.6, 1.2), toon(0xdfe8ee, { emissive:0x222a30 }), 0, 1.9, 0, cut);
+    // station marker
+    mesh(new THREE.CylinderGeometry(0.62, 0.62, 0.05, 20), toon(0xffd31a), 2.0, 0.78, -1.2, G, false);
+    // cup supply
+    mesh(new THREE.BoxGeometry(1.1, 0.7, 1.0), toon(0xfff4cf), 2.0, 0.35, -3.2, G);
+    this.supply = new THREE.Group(); this.supply.position.set(FX + 2.0, 0.7, -3.2); S.add(this.supply);
+    // blender
+    const bl = this.blender = new THREE.Group(); bl.position.set(-2.6, 0, 1.9); G.add(bl);
+    mesh(new THREE.BoxGeometry(1.4, 0.8, 1.4), toon(0xfff4cf), 0, 0.4, 0, bl);
+    mesh(new THREE.BoxGeometry(1.42, 0.16, 1.42), toon(0xe3262b), 0, 0.72, 0, bl);
+    mesh(new THREE.CylinderGeometry(0.62, 0.5, 1.3, 16, 1, true), new THREE.MeshToonMaterial({ color:0xcfefff, transparent:true, opacity:0.45, side:THREE.DoubleSide }), 0, 1.45, 0, bl, false);
+    mesh(new THREE.CylinderGeometry(0.66, 0.66, 0.16, 16), toon(0x2a9a48), 0, 2.16, 0, bl);
+    this.blendFill = new THREE.Group(); this.blendFill.position.y = 0.95; bl.add(this.blendFill);
+    this.blendBlade = mesh(new THREE.BoxGeometry(0.9, 0.04, 0.12), toon(0xdfe8ee), 0, 0.92, 0, bl, false);
+    const bsign = canvasTex(256, 64, (g) => { g.fillStyle = '#2a9a48'; g.fillRect(0,0,256,64); g.fillStyle = '#fff'; g.font = '900 34px "M PLUS Rounded 1c", sans-serif'; g.textAlign = 'center'; g.fillText('ブレンダー', 128, 45); });
+    mesh(new THREE.BoxGeometry(1.2, 0.3, 0.04), new THREE.MeshToonMaterial({ map:bsign }), 0, 0.4, 0.72, bl, false);
+    const blHit = new THREE.Mesh(new THREE.BoxGeometry(1.8, 2.6, 1.8), new THREE.MeshBasicMaterial({ visible:false }));
+    blHit.position.y = 1.2; blHit.userData = { blender:true }; bl.add(blHit); this.hits.push(blHit);
+    // seasoning tank
+    const tk = new THREE.Group(); tk.position.set(4.0, 0, -2.0); G.add(tk);
+    mesh(new THREE.CylinderGeometry(0.5, 0.5, 0.3, 14), toon(0x7d847d), 0, 0.15, 0, tk);
+    mesh(new THREE.CylinderGeometry(0.5, 0.5, 1.8, 14, 1, true), new THREE.MeshToonMaterial({ color:0xcfefff, transparent:true, opacity:0.4, side:THREE.DoubleSide }), 0, 1.2, 0, tk, false);
+    this.tankFillMat = toon(0x7cc242);
+    this.tankFill = mesh(new THREE.CylinderGeometry(0.44, 0.44, 1, 14), this.tankFillMat, 0, 0.3, 0, tk, false);
+    mesh(new THREE.CylinderGeometry(0.54, 0.54, 0.16, 14), toon(0xe3262b), 0, 2.15, 0, tk);
+    const pipe = mesh(new THREE.CylinderGeometry(0.08, 0.08, 2.3, 8), toon(0x9aa19a), -1.0, 2.1, 0.4, tk); pipe.rotation.z = Math.PI/2.6;
+    // truck
+    const tr = this.truck = new THREE.Group(); tr.position.set(FX + 1.4, 0, 5.3); S.add(tr);
+    mesh(new THREE.BoxGeometry(3.0, 0.3, 1.7), toon(0x555a55), 0, 0.65, 0, tr);
+    mesh(new THREE.BoxGeometry(2.6, 0.12, 1.6), toon(0x2a9a48), -0.3, 0.86, 0, tr);
+    [[-0.3,0.78],[-0.3,-0.78]].forEach(([x,z]) => mesh(new THREE.BoxGeometry(2.6, 0.32, 0.08), toon(0x2a9a48), x, 1.05, z, tr));
+    mesh(new THREE.BoxGeometry(0.08, 0.32, 1.6), toon(0x2a9a48), -1.6, 1.05, 0, tr);
+    mesh(new THREE.BoxGeometry(1.0, 1.25, 1.65), toon(0xe3262b), 1.45, 1.3, 0, tr);
+    mesh(new THREE.BoxGeometry(0.06, 0.5, 1.4), toon(0xbfe8ff, { emissive:0x335566 }), 1.96, 1.55, 0, tr, false);
+    mesh(new THREE.BoxGeometry(1.04, 0.16, 1.7), toon(0xffd31a), 1.45, 0.85, 0, tr, false);
+    this.wheels = [];
+    [[-0.9,0.8],[-0.9,-0.8],[1.3,0.8],[1.3,-0.8]].forEach(([x,z]) => { const w = mesh(new THREE.CylinderGeometry(0.36, 0.36, 0.26, 14), toon(0x2a2a2a), x, 0.38, z, tr); w.rotation.x = Math.PI/2; this.wheels.push(w); });
+    this.truckBed = new THREE.Group(); this.truckBed.position.set(-0.3, 0.92, 0); tr.add(this.truckBed);
+    // potato log
+    this.logGroup = new THREE.Group(); G.add(this.logGroup);
+  }
+
+  stickMat(fk){
+    if (!this.flavorMats[fk]){
+      const fl = FLAVORS[fk];
+      this.flavorMats[fk] = { stick:new THREE.MeshToonMaterial({ map:stickTexture(fl) }), cup:new THREE.MeshToonMaterial({ map:cupTexture(fl) }),
+        inner:toon(0xfff3c4, { side:THREE.BackSide }), base:toon(new THREE.Color(fl.hex)) };
+    }
+    return this.flavorMats[fk];
+  }
+
+  applyTheme(fk){
+    const fl = FLAVORS[fk];
+    this.groundMat.color.setHex(fl.grass); this.treeMat.color.setHex(fl.tree);
+    this.treeMat2.color.setHex(fl.tree).multiplyScalar(0.85);
+    this.fieldMat.color.setHex(fl.field);
+    this.wallMat.color.setHex(fl.wall); this.roofMat.color.setHex(fl.roof); this.sideMat.color.setHex(fl.wall);
+    if (this.signMat.map) this.signMat.map.dispose();
+    this.signMat.map = signTexture(fl); this.signMat.needsUpdate = true;
+    this.tankFillMat.color.set(fl.hex);
+    this.cheeseDecor.visible = fk === 'cheese'; this.butterDecor.visible = fk === 'butter';
+    this.cow.visible = this.cowIcon.visible = fl.cow; this.cowHit.visible = fl.cow;
+    document.documentElement.style.setProperty('--flavor', fl.hex);
+    // giant cup on the factory roof
+    if (!this.roofCup){ this.roofCup = new THREE.Group(); this.roofCup.position.set(FX - 1.6, 4.85, -4.5); this.roofCup.scale.setScalar(1.7); this.scene.add(this.roofCup); }
+    this.roofCup.clear();
+    this.roofCup.add(this.makeCup(fk));
+    for (let n = 0; n < 8; n++){
+      const sp = this.slotPos(n), st = mesh(GEO('stick', () => new THREE.CylinderGeometry(0.06, 0.06, 1.15, 8)), this.stickMat(fk).stick, sp.x, 0.62 + (n % 3) * 0.06, sp.z, this.roofCup);
+      st.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), new THREE.Vector3(sp.tx, 1, sp.tz).normalize());
+    }
+    // supply cups
+    this.supply.clear();
+    const m = this.stickMat(fk);
+    for (let k = 0; k < 3; k++){ const c = this.makeCup(fk, false); c.position.y = k*0.12; c.scale.setScalar(0.85); this.supply.add(c); }
+  }
+
+  makeCup(fk, withInner=true){
+    const m = this.stickMat(fk), g = new THREE.Group();
+    mesh(GEO('cupO', () => new THREE.CylinderGeometry(0.46, 0.34, 0.85, 24, 1, true)), m.cup, 0, 0.425, 0, g);
+    if (withInner) mesh(GEO('cupI', () => new THREE.CylinderGeometry(0.44, 0.33, 0.84, 24, 1, true)), m.inner, 0, 0.425, 0, g, false);
+    mesh(GEO('cupB', () => new THREE.CylinderGeometry(0.34, 0.34, 0.04, 20)), m.base, 0, 0.02, 0, g);
+    mesh(GEO('cupR', () => new THREE.TorusGeometry(0.46, 0.03, 6, 24)), MAT(0xfff4cf), 0, 0.85, 0, g, false).rotation.x = Math.PI/2;
+    return g;
+  }
+
+  /* ---------------- day setup ---------------- */
+  newState(cfg, mode){
+    return {
+      mode, cfg, flavor:cfg.flavor, goal:cfg.goal, dayLen:cfg.len, time:0, todBase:0, timeBase:0,
+      score:0, shipped:0, combo:0, maxCombo:0, perfects:0, golden:0, cuts:0,
+      inv:{ potato:2, carrot:0, parsley:0, milk:0, seasoning:1 },
+      seed:'potato', area:0, cup:null, cupCD:0.4, log:0, loading:false,
+      needle:0, ndir:1, zoneC:0.5, speed:cfg.speed, blending:false, cowT:0, cowReady:false,
+      intro:mode === 'play' ? 2.0 : 0, endT:0, helper:false, joined:false, demoT:0, caption:null, bump:{},
+    };
+  }
+  resetScene(){
+    this.parts.forEach(p => { this.scene.remove(p.m); if (p.own) p.m.material.dispose(); }); this.parts = [];
+    this.tweens = [];
+    this.truck.position.set(FX + 1.4, 0, 5.3); this.truckV = 0;
+    this.truckBed.clear(); this.loaded = 0;
+    if (this.cupObj){ this.fac.remove(this.cupObj); this.cupObj = null; }
+    this.logGroup.clear(); this.logMesh = null;
+    this.plots.forEach(p => { p.state = 'empty'; p.prog = 0; p.golden = false; p.watered2 = false; p.visKey = ''; });
+    this.fx.innerHTML = '';
+    this.wrap.classList.remove('fever');
+    [this.potaKun, this.caroChan].forEach(c => { c.g.position.copy(c.home); c.target.copy(c.home); c.act = c.queued = null; c.waving = false; });
+    this.caroChan.keepTool = 'knife'; this.caroChan.face = 0.35;
+  }
+  startDay(idx){
+    Sfx.init();
+    this.dayIdx = idx; const cfg = DAYS[idx];
+    this.s = this.newState(cfg, 'play');
+    this.resetScene(); this.applyTheme(cfg.flavor);
+    this.camX = 0; this.paused = false;
+    // a little head start
+    this.plotSet(0, 'potato', 'seed'); this.plotSet(4, FLAVORS[cfg.flavor].seeds[1] || 'potato', 'seed');
+    if (FLAVORS[cfg.flavor].cow) this.s.cowT = 3;
+    setTimeout(() => Sfx.play('start'), 300);
+    this.emitSnap();
+  }
+  startDemo(){
+    this.dayIdx = -1;
+    this.s = this.newState(DEMO_DAY, 'demo');
+    this.resetScene(); this.applyTheme('salad'); this.camX = 0; this.paused = false;
+    Object.assign(this.s.inv, { potato:3, carrot:1, parsley:1, seasoning:1 });
+    this.plotSet(0, 'potato', 'ripe'); this.plotSet(1, 'potato', 'seed'); this.plotSet(3, 'carrot', 'growing', 0.7);
+    this.plotSet(4, 'potato', 'growing', 0.3); this.plotSet(5, 'parsley', 'ripe'); this.plotSet(7, 'potato', 'thirsty', 0.5);
+    this.plotSet(8, 'potato', 'growing', 0.8);
+    this.emitSnap();
+  }
+  plotSet(i, type, state, prog=0){ const p = this.plots[i]; p.type = type; p.state = state; p.prog = state === 'ripe' ? 1 : prog; p.watered2 = prog > 0.5; p.golden = false; }
+  joinDemo(){
+    const s = this.s; if (!s || s.mode !== 'demo') return;
+    Sfx.init(); Sfx.play('start');
+    s.todBase = this.tod(); s.timeBase = s.time; s.dayLen = s.time + 55;
+    s.mode = 'play'; s.helper = true; s.joined = true; s.caption = null;
+    s.goal = s.shipped + 3;
+    this.callout('いっしょに あそぼう！', 'はたけは おてつだいロボが てつだうよ');
+  }
+  endEarly(){ if (this.s && this.s.mode === 'play' && this.s.intro <= 0) this.beginEnding(); }
+  setPaused(v){ this.paused = v; this.emitSnap(); }
+  setArea(a){ if (!this.s || this.s.mode === 'ending' || this.s.mode === 'done') return; if (this.s.area !== a){ this.s.area = a; Sfx.play('click'); this.emitSnap(); } }
+  setSeed(k){ if (this.s){ this.s.seed = k; Sfx.play('click'); this.emitSnap(); } }
+  tod(){ const s = this.s; if (!s) return 0; return clamp(s.todBase + (s.time - s.timeBase) / Math.max(1, s.dayLen - s.timeBase) * (1 - s.todBase), 0, 1); }
+
+  /* ---------------- input ---------------- */
+  bindInput(){
+    const w = this.wrap;
+    w.addEventListener('pointerdown', e => {
+      Sfx.init();
+      if (e.target.closest('button')) { this.down = null; return; }
+      this.down = { x:e.clientX, y:e.clientY, t:performance.now(), needle:this.s ? this.s.needle : 0, canvas:e.target === this.canvas };
+    });
+    w.addEventListener('pointerup', e => {
+      const d = this.down; this.down = null; if (!d || !this.s) return;
+      const s = this.s; if (s.mode !== 'play' || this.paused || s.intro > 0) return;
+      const dx = e.clientX - d.x, dy = e.clientY - d.y;
+      if (Math.abs(dx) > 45 && Math.abs(dx) > Math.abs(dy) * 1.2){ this.setArea(dx < 0 ? 1 : 0); return; }
+      if (Math.hypot(dx, dy) < 22 && d.canvas) this.worldTap(e.clientX, e.clientY, d.needle);
+    });
+  }
+  worldTap(cx, cy, needle){
+    const rect = this.canvas.getBoundingClientRect();
+    const v = new THREE.Vector2(((cx - rect.left) / rect.width) * 2 - 1, -((cy - rect.top) / rect.height) * 2 + 1);
+    this.ray.setFromCamera(v, this.camera);
+    const hit = this.ray.intersectObjects(this.hits.filter(h => h.visible !== false), false)[0];
+    const s = this.s;
+    if (s.area === 0){
+      if (!hit) return;
+      if (hit.object.userData.plot !== undefined) this.tapPlot(hit.object.userData.plot);
+      else if (hit.object.userData.cow) this.tapCow();
+    } else {
+      if (hit && hit.object.userData.blender) return this.blend();
+      this.cut(needle);
+    }
+  }
+
+  /* ---------------- farm actions ---------------- */
+  tapPlot(i, bot=false){
+    const s = this.s, p = this.plots[i];
+    const wp = new THREE.Vector3(p.x, 1.4, p.z);
+    const front = new THREE.Vector3(p.x, 0.48, p.z + 1.05);
+    const act = p.state === 'empty' ? 'plant' : (p.state === 'seed' || p.state === 'thirsty') ? 'water' : p.state === 'ripe' ? 'harvest' : null;
+    if (act) this.charDo(this.potaKun, front, act);
+    if (p.state === 'empty'){
+      const allowed = FLAVORS[s.flavor].seeds;
+      p.type = allowed.includes(s.seed) ? s.seed : 'potato';
+      p.state = 'seed'; p.prog = 0; p.golden = false; p.watered2 = false;
+      Sfx.play('plant'); this.pop(wp, CROPS[p.type].name + ' を植えた', '');
+      this.burst(new THREE.Vector3(p.x, 0.6, p.z), 0x8a5a2b, 8, 2.2);
+    } else if (p.state === 'seed' || p.state === 'thirsty'){
+      if (p.state === 'thirsty') p.watered2 = true;
+      p.state = 'growing'; Sfx.play('water'); this.pop(wp, 'みずやり！', '');
+      this.rain(p.x, p.z);
+    } else if (p.state === 'ripe'){
+      const y = p.golden ? 6 : CROPS[p.type].yield;
+      s.inv[p.type] += y; this.bump(p.type);
+      s.score += p.golden ? 300 : 10;
+      if (p.golden){ s.golden++; this.legendary(p); }
+      else { Sfx.play('harvest'); this.pop(wp, '+' + y + ' ' + CROPS[p.type].name, 'big'); }
+      this.harvestFx(p);
+      if (p.type === 'potato') for (let k = 0; k < Math.min(y, 4); k++) setTimeout(() => this.dropToHopper(), 300 + k*180);
+      p.state = 'empty'; p.prog = 0; p.golden = false;
+    } else if (!bot){
+      this.pop(wp, 'そだち中…', 'miss');
+    }
+  }
+  tapCow(){
+    const s = this.s; if (!FLAVORS[s.flavor].cow) return;
+    this.charDo(this.potaKun, new THREE.Vector3(0.6, 0.48, -3.75), s.cowReady ? 'harvest' : 'cheer');
+    if (s.cowReady){ s.cowReady = false; s.cowT = 0; s.inv.milk++; this.bump('milk'); s.score += 10; Sfx.play('milk'); this.pop(new THREE.Vector3(0.6, 2.2, -5.7), '+1 ミルク', 'big'); }
+    else { Sfx.play('milk'); this.pop(new THREE.Vector3(0.6, 2.2, -5.7), 'モ〜', 'miss'); }
+  }
+  canBlend(){ const s = this.s; if (!s || s.blending) return false; const r = FLAVORS[s.flavor].recipe; return Object.keys(r).every(k => s.inv[k] >= r[k]); }
+  blend(){
+    const s = this.s;
+    if (!this.canBlend()){ const r = FLAVORS[s.flavor].recipe; this.toast('ブレンドには ' + Object.keys(r).map(k => ITEM[k].name + '×' + r[k]).join(' + ') + ' が必要'); return; }
+    const r = FLAVORS[s.flavor].recipe; Object.keys(r).forEach(k => s.inv[k] -= r[k]);
+    s.blending = true; Sfx.play('blend');
+    this.charDo(this.caroChan, new THREE.Vector3(-2.6, 0.2, 2.95), 'press'); this.caroChan.idleT = -0.6;
+    // contents
+    this.blendFill.clear();
+    const cols = s.flavor === 'salad' ? [0xf08a24, 0x3c9a32] : s.flavor === 'cheese' ? [0xffffff, 0xffcf3a] : [0xffffff, 0x3c9a32];
+    for (let k = 0; k < 14; k++){ const m = mesh(GEO('ico', () => new THREE.IcosahedronGeometry(0.1, 0)), MAT(cols[k % 2]), (Math.random()-0.5)*0.6, Math.random()*0.5, (Math.random()-0.5)*0.6, this.blendFill, false); m.userData.a = Math.random()*6; }
+    this.tween(1.3, k => { this.blendFill.rotation.y += 0.5; this.blendBlade.rotation.y += 0.7; this.blender.scale.set(1 + Math.sin(k*60)*0.02, 1, 1 + Math.cos(k*60)*0.02); }, () => {
+      this.blendFill.clear(); this.blender.scale.set(1,1,1);
+      s.inv.seasoning += 2; s.blending = false; this.bump('seasoning');
+      const wp = new THREE.Vector3(FX - 2.6, 2.6, 1.9);
+      this.burst(wp, new THREE.Color(FLAVORS[s.flavor].hex).getHex(), 16, 3);
+      this.pop(wp, FLAVORS[s.flavor].name + '味パウダー +2！', 'big'); Sfx.play('cup');
+    });
+  }
+
+  /* ---------------- factory actions ---------------- */
+  canCut(){ const s = this.s, c = s.cup; return s.log > 0 && c && c.ready && c.n < STICKS_PER_CUP && !this.cutCD; }
+  cut(needle){
+    const s = this.s;
+    if (!this.canCut()){
+      if (this.cutCD) return;
+      if (s.log <= 0) this.toast(s.inv.potato > 0 || s.loading ? 'じゃがいもを投入中…' : 'じゃがいもが ないよ！ 畑で収穫しよう');
+      else if (!s.cup) this.toast(this.canBlend() ? 'ブレンダーで 味パウダーを作ろう！' : '味パウダーの具材を 畑で育てよう');
+      return;
+    }
+    this.cutCD = 0.12;
+    const kc = this.caroChan;
+    if (kc.g.position.distanceTo(kc.home) > 0.2){ kc.g.position.copy(kc.home); kc.target.copy(kc.home); }
+    this.charDo(kc, null, 'chop');
+    const d = Math.abs(needle - s.zoneC);
+    const grade = d < 0.075 ? 'perfect' : d < 0.2 ? 'good' : 'miss';
+    s.log--; s.cuts++;
+    Sfx.play('cut');
+    this.tween(0.16, k => { this.blade.position.y = 1.9 - Math.sin(k*Math.PI) * 0.95; });
+    this.updateLog(true);
+    const from = new THREE.Vector3(FX + 0.75, 0.85, -1.2);
+    const c = s.cup;
+    if (grade === 'miss'){
+      s.combo = 0; this.setFever(false); c.perfect = false; Sfx.play('miss');
+      this.pop(from.clone().setY(1.8), 'ポキッ…', 'miss');
+      for (let k = 0; k < 2; k++) this.spawn({ geo:GEO('half', () => new THREE.CylinderGeometry(0.06, 0.06, 0.5, 6)), mat:this.stickMat(s.flavor).stick, pos:from.clone(), vel:new THREE.Vector3(0.5 + k, 2.5, (Math.random()-0.5)*2), life:1, grav:9, spin:8 });
+    } else {
+      const perfect = grade === 'perfect';
+      if (perfect){
+        s.combo++; s.perfects++; s.maxCombo = Math.max(s.maxCombo, s.combo);
+        s.score += (10 + Math.min(s.combo, 20) * 2) * (s.fever ? 2 : 1); Sfx.play('perfect', s.combo);
+        if (s.combo === 5) this.callout('GREAT!', '5コンボ');
+        if (s.combo === 10){ this.setFever(true); this.callout('FEVER!!', 'ぴったりの得点が 2倍！'); this.stickRain(26); }
+        if (s.combo === 20) { this.callout('じゃがMAX!!', '20コンボ達成'); this.stickRain(40); }
+      }
+      else { s.combo = 0; this.setFever(false); c.perfect = false; s.score += 5; Sfx.play('good'); }
+      this.pop(from.clone().setY(2.0), perfect ? (s.combo > 1 ? 'ぴったり！×' + s.combo : 'ぴったり！') : 'OK', perfect ? 'big' : '');
+      this.flyStick(c, perfect);
+    }
+    s.zoneC = 0.28 + Math.random() * 0.44;
+    this.emitSnap();
+  }
+  slotPos(n){
+    if (n === 0) return { x:0, z:0, tx:0, tz:0 };
+    const a = (n - 1) / 7 * Math.PI * 2 + 0.3, r = 0.24;
+    return { x:Math.cos(a)*r, z:Math.sin(a)*r, tx:Math.cos(a)*0.16, tz:Math.sin(a)*0.16 };
+  }
+  flyStick(c, perfect){
+    const idx = c.n++; const sp = this.slotPos(idx);
+    const st = mesh(GEO('stick', () => new THREE.CylinderGeometry(0.06, 0.06, 1.15, 8)), this.stickMat(this.s.flavor).stick, 0, 0, 0, null);
+    this.fac.add(st);
+    const from = new THREE.Vector3(0.75, 0.88, -1.2);
+    const cupP = this.cupObj.position;
+    const to = new THREE.Vector3(cupP.x + sp.x, cupP.y + 0.62, cupP.z + sp.z);
+    const wob = perfect ? 0 : (Math.random()-0.5) * 0.35;
+    const up = new THREE.Vector3(sp.tx + wob, 1, sp.tz + wob*0.6).normalize();
+    const qEnd = new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0,1,0), up);
+    const qStart = new THREE.Quaternion().setFromEuler(new THREE.Euler(0, 0, Math.PI/2));
+    this.tween(0.32, k => {
+      st.position.lerpVectors(from, to, k); st.position.y += Math.sin(k*Math.PI) * 1.3 + (1-k)*0.4;
+      st.quaternion.copy(qStart).slerp(qEnd, ease(k));
+    }, () => {
+      // reparent into cup
+      this.fac.remove(st); this.cupObj.add(st);
+      st.position.set(sp.x, 0.62, sp.z); st.quaternion.copy(qEnd);
+      this.tween(0.25, k => { st.scale.set(1, 1 + Math.sin(k*Math.PI)*0.12*(1-k), 1); });
+      if (perfect) this.burst(new THREE.Vector3(FX + cupP.x, 1.9, cupP.z), 0xffd31a, 6, 1.6);
+      c.landed++;
+      if (c.landed >= STICKS_PER_CUP) this.completeCup();
+    });
+  }
+  completeCup(){
+    const s = this.s, c = s.cup, obj = this.cupObj;
+    s.shipped++; s.score += 100;
+    this.charDo(this.caroChan, null, 'cheer');
+    if (c.perfect){ s.score += 150; Sfx.play('pcup'); this.callout('PERFECT CUP!', 'ぜんぶ ぴったり！ +250'); this.stickRain(30); this.stickBurst(new THREE.Vector3(2, 1.6, -1.2), 16); this.burst(new THREE.Vector3(FX + 2, 2, -1.2), 0xffd31a, 30, 4); this.burst(new THREE.Vector3(FX + 2, 2, -1.2), 0xe3262b, 20, 4); }
+    else { Sfx.play('cup'); this.pop(new THREE.Vector3(FX + 2, 2.4, -1.2), '1カップ完成！ +100', 'big'); this.burst(new THREE.Vector3(FX + 2, 2, -1.2), 0x7cc242, 14, 3); }
+    // celebratory wiggle, then ride belt to truck
+    s.cup = null; this.cupObj = null; s.cupCD = 0.7;
+    if (s.shipped === s.goal && s.mode === 'play') setTimeout(() => this.callout('目標達成！', '夕方まで もっと出荷しよう'), 900);
+    const slot = this.loaded++;
+    this.tween(0.35, k => { obj.scale.setScalar(1 + Math.sin(k*Math.PI)*0.18); obj.rotation.y = k * Math.PI * 2; }, () => {
+      this.tween(0.9, k => { obj.position.z = lerp(-1.2, 3.2, k); }, () => {
+        const col = slot % 4, row = Math.floor(slot / 4) % 3, layer = Math.floor(slot / 12);
+        const bedL = new THREE.Vector3(-1.05 + col*0.55, layer*0.5, -0.5 + row*0.5);
+        const startW = new THREE.Vector3(FX + 2, 0.75, 3.2);
+        this.fac.remove(obj); this.scene.add(obj); obj.position.copy(startW);
+        this.tween(0.45, k => {
+          const endW = this.truckBed.localToWorld(bedL.clone());
+          obj.position.lerpVectors(startW, endW, k); obj.position.y += Math.sin(k*Math.PI) * 1.2;
+          obj.scale.setScalar(lerp(1, 0.55, k));
+        }, () => { this.scene.remove(obj); this.truckBed.add(obj); obj.position.copy(bedL); obj.scale.setScalar(0.55); obj.rotation.set(0, 0, 0); });
+      });
+    });
+    this.emitSnap();
+  }
+  spawnCup(){
+    const s = this.s;
+    s.inv.seasoning--; this.bump('seasoning');
+    const c = s.cup = { n:0, landed:0, perfect:true, ready:false };
+    const obj = this.cupObj = this.makeCup(s.flavor); obj.position.set(2.0, 0.78, -3.2); this.fac.add(obj);
+    this.tween(0.45, k => { obj.position.z = lerp(-3.2, -1.2, ease(k)); obj.position.y = 0.78 + Math.sin(k*Math.PI)*0.5; }, () => {
+      c.ready = true;
+      this.burst(new THREE.Vector3(FX + 2, 1.5, -1.2), new THREE.Color(FLAVORS[s.flavor].hex).getHex(), 10, 1.5);
+      this.emitSnap();
+    });
+  }
+  updateLog(anim){
+    const s = this.s;
+    if (!this.logMesh){
+      this.logMesh = mesh(new THREE.CylinderGeometry(0.17, 0.17, 1.2, 12), this.stickMat(s.flavor).stick, 0, 0.92, -1.2, this.logGroup);
+      this.logMesh.rotation.z = Math.PI/2;
+    }
+    const len = s.log * 0.3; this.logMesh.visible = s.log > 0;
+    this.logMesh.scale.y = Math.max(0.01, s.log / 4);
+    if (!anim) this.logMesh.position.x = 0.55 - len/2;
+    else { const x0 = this.logMesh.position.x; this.tween(0.12, k => { this.logMesh.position.x = lerp(x0, 0.55 - len/2, k); }); }
+  }
+  loadLog(){
+    const s = this.s; s.inv.potato--; s.loading = true; this.bump('potato');
+    if (this.logMesh) { this.logMesh.material = this.stickMat(s.flavor).stick; }
+    s.log = 4; this.updateLog(false); s.log = 0;
+    const m = this.logMesh; m.visible = true; m.scale.y = 1;
+    this.tween(0.55, k => { m.position.x = lerp(-3.4, -0.05, ease(k)); }, () => { s.log = 4; s.loading = false; this.updateLog(false); this.emitSnap(); });
+  }
+  dropToHopper(){
+    if (!this.s) return;
+    this.spawn({ geo:GEO('pot', () => new THREE.SphereGeometry(0.2, 8, 6)), mat:MAT(0xc98d3e), pos:new THREE.Vector3(FX - 3.8 + (Math.random()-0.5)*0.4, 4.2, -1.2), vel:new THREE.Vector3(0, 0, 0), life:0.62, grav:12, spin:4, scale:[1.2, 0.9, 1] });
+  }
+
+  /* ---------------- FX ---------------- */
+  spawn(o){
+    const m = new THREE.Mesh(o.geo, o.fade ? o.mat.clone() : o.mat); m.position.copy(o.pos);
+    if (o.scale) m.scale.set(...o.scale);
+    this.scene.add(m);
+    this.parts.push({ m, vel:o.vel, life:o.life, max:o.life, grav:o.grav || 0, spin:o.spin || 0, fade:!!o.fade, own:!!o.fade, grow:o.grow || 0 });
+  }
+  burst(pos, color, n=10, sp=2){
+    const mat = MAT(color), geo = GEO('burst', () => new THREE.BoxGeometry(0.12, 0.12, 0.12));
+    for (let i = 0; i < n; i++) this.spawn({ geo, mat, pos:pos.clone(), vel:new THREE.Vector3((Math.random()-0.5)*sp*2, Math.random()*sp + 1, (Math.random()-0.5)*sp*2), life:0.7 + Math.random()*0.4, grav:8, spin:10 });
+  }
+  rain(x, z){
+    const geo = GEO('rain', () => new THREE.SphereGeometry(0.06, 6, 4)), mat = MAT(0x5ab4ff);
+    for (let i = 0; i < 18; i++) this.spawn({ geo, mat, pos:new THREE.Vector3(x + (Math.random()-0.5)*1.6, 2.6 + Math.random()*1.4, z + (Math.random()-0.5)*1.6), vel:new THREE.Vector3(0, -3, 0), life:0.55, grav:10, scale:[1, 2, 1] });
+  }
+  harvestFx(p){
+    const col = p.golden ? 0xffcf1a : p.type === 'potato' ? 0xc98d3e : p.type === 'carrot' ? 0xf08a24 : 0x2f8f2f;
+    const geo = p.type === 'carrot' ? GEO('hc', () => new THREE.ConeGeometry(0.12, 0.45, 6)) : GEO('hs', () => new THREE.SphereGeometry(0.17, 8, 6));
+    const mat = MAT(col, p.golden ? { emissive:0x7a5a00 } : {});
+    for (let i = 0; i < 5; i++) this.spawn({ geo, mat, pos:new THREE.Vector3(p.x, 0.7, p.z), vel:new THREE.Vector3((Math.random()-0.5)*3, 4 + Math.random()*2, (Math.random()-0.5)*3), life:0.9, grav:12, spin:6 });
+    this.burst(new THREE.Vector3(p.x, 0.7, p.z), 0x7d5228, 6, 2);
+  }
+  legendary(p){
+    Sfx.play('legend');
+    const el = document.createElement('div'); el.className = 'legend';
+    el.innerHTML = '<div class="rays"></div><div class="lt"><b>LEGENDARY!</b><span>ゴールデンポテト ×6　+300</span></div>';
+    this.fx.appendChild(el); setTimeout(() => el.remove(), 2400);
+    const fl = document.createElement('div'); fl.className = 'flash'; this.fx.appendChild(fl); setTimeout(() => fl.remove(), 500);
+    this.wrap.classList.remove('shake'); void this.wrap.offsetWidth; this.wrap.classList.add('shake');
+    const gold = MAT(0xffd31a, { emissive:0x8a6a00 }), geo = GEO('oct', () => new THREE.OctahedronGeometry(0.14, 0));
+    for (let i = 0; i < 46; i++) this.spawn({ geo, mat:gold, pos:new THREE.Vector3(p.x, 1, p.z), vel:new THREE.Vector3((Math.random()-0.5)*7, 5 + Math.random()*5, (Math.random()-0.5)*7), life:1.4, grav:9, spin:12 });
+    this.slowmo = 0.9; this.stickRain(24);
+  }
+  pop(wp, text, cls){
+    const v = wp.clone().project(this.camera); if (v.z > 1) return;
+    const el = document.createElement('div'); el.className = 'pop ' + (cls || ''); el.textContent = text;
+    el.style.left = ((v.x + 1) / 2 * this.w) + 'px'; el.style.top = ((1 - v.y) / 2 * this.h) + 'px';
+    this.fx.appendChild(el); setTimeout(() => el.remove(), 1000);
+  }
+  callout(text, sub){
+    // queue so big callouts never overlap
+    const now = performance.now(), at = Math.max(now, this.calloutAt || 0);
+    this.calloutAt = at + 1000;
+    setTimeout(() => {
+      const el = document.createElement('div'); el.className = 'callout';
+      el.innerHTML = text + (sub ? '<small>' + sub + '</small>' : '');
+      this.fx.appendChild(el); setTimeout(() => el.remove(), 1350);
+    }, at - now);
+  }
+  setFever(v){
+    if (!this.s || this.s.fever === v) return;
+    this.s.fever = v; this.wrap.classList.toggle('fever', v);
+  }
+  stickRain(n=24){
+    const fl = FLAVORS[this.s ? this.s.flavor : 'salad'];
+    for (let i = 0; i < n; i++){
+      const el = document.createElement('i'); el.className = 'cf';
+      el.style.left = (Math.random() * 100) + '%';
+      el.style.animationDelay = (Math.random() * 0.5) + 's';
+      el.style.animationDuration = (1.4 + Math.random() * 1.0) + 's';
+      el.style.setProperty('--r', ((Math.random() - 0.5) * 900) + 'deg');
+      el.style.setProperty('--d1', fl.stick.dots[0]); el.style.setProperty('--d2', fl.stick.dots[1]);
+      el.style.height = (34 + Math.random() * 26) + 'px';
+      this.fx.appendChild(el); setTimeout(() => el.remove(), 3000);
+    }
+  }
+  stickBurst(local, n=14){
+    const geo = GEO('bst', () => new THREE.CylinderGeometry(0.05, 0.05, 0.8, 6)), mat = this.stickMat(this.s.flavor).stick;
+    for (let i = 0; i < n; i++) this.spawn({ geo, mat, pos:new THREE.Vector3(FX + local.x, local.y, local.z), vel:new THREE.Vector3((Math.random()-0.5)*5, 5 + Math.random()*4, (Math.random()-0.5)*5), life:1.3, grav:11, spin:9 });
+  }
+  toast(text){ if (this.s){ this.s.toast = text; this.s.toastT = 1.8; this.emitSnap(); } }
+  bump(k){ if (this.s){ this.s.bump[k] = (this.s.bump[k] || 0) + 1; } }
+  tween(dur, fn, done){ this.tweens.push({ t:0, dur, fn, done }); }
+
+  /* ---------------- crops ---------------- */
+  buildCrop(p){
+    const g = p.cropG; g.traverse(o => { if (o.isMesh) o.geometry.dispose(); }); g.clear();
+    const leafM = toon(p.state === 'ripe' ? 0x6aa83a : 0x4f9d3a), dark = toon(0x2e8b2e);
+    const sway = new THREE.Group(); g.add(sway); p.sway = sway;
+    if (p.state === 'seed'){
+      mesh(new THREE.SphereGeometry(0.32, 10, 6, 0, Math.PI*2, 0, Math.PI/2), toon(0x7d5228), 0, 0, 0, g);
+      const l1 = mesh(new THREE.SphereGeometry(0.12, 8, 6), leafM, -0.08, 0.32, 0, sway); l1.scale.set(1.2, 0.5, 0.7);
+      const l2 = mesh(new THREE.SphereGeometry(0.12, 8, 6), leafM, 0.08, 0.36, 0, sway); l2.scale.set(1.2, 0.5, 0.7);
+      mesh(new THREE.CylinderGeometry(0.02, 0.02, 0.3, 4), leafM, 0, 0.18, 0, sway);
+      return;
+    }
+    if (p.type === 'potato'){
+      [[0,0.55,0,0.36],[0.3,0.4,0.15,0.28],[-0.3,0.42,0.1,0.28],[0.1,0.4,-0.3,0.27],[-0.15,0.75,-0.1,0.24]].forEach(([x,y,z,r]) => mesh(new THREE.SphereGeometry(r, 9, 7), leafM, x, y, z, sway));
+      if (p.state === 'ripe'){
+        [[0.05,0.95,0.15],[-0.25,0.85,0.2],[0.3,0.8,-0.1]].forEach(([x,y,z]) => mesh(new THREE.SphereGeometry(0.06, 6, 4), toon(0xffffff), x, y, z, sway, false));
+        const pm = p.golden ? toon(0xffd31a, { emissive:0x7a5a00 }) : toon(0xd9a95b);
+        [[0.55,0.05,0.4],[-0.55,0.05,0.35],[0.1,0.05,0.65],[-0.4,0.05,-0.5]].forEach(([x,y,z]) => { const m = mesh(new THREE.SphereGeometry(0.2, 9, 7), pm, x, y, z, g); m.scale.set(1.25, 0.85, 1); });
+        if (p.golden){ p.sparkle = new THREE.Sprite(iconMat('gold')); p.sparkle.scale.set(0.5, 0.5, 1); p.sparkle.position.y = 1.3; g.add(p.sparkle); }
+      }
+    } else if (p.type === 'carrot'){
+      for (let k = 0; k < 6; k++){ const a = k / 6 * Math.PI*2; const c = mesh(new THREE.ConeGeometry(0.08, 0.75, 5), leafM, Math.cos(a)*0.1, 0.42, Math.sin(a)*0.1, sway); c.rotation.set(Math.sin(a)*0.35, 0, -Math.cos(a)*0.35); }
+      if (p.state === 'ripe'){ const c = mesh(new THREE.ConeGeometry(0.22, 0.5, 10), toon(0xf08a24), 0, 0.05, 0, g); c.rotation.x = Math.PI; }
+    } else {
+      [[0,0.35,0],[0.22,0.3,0.1],[-0.22,0.3,0.08],[0.1,0.3,-0.22],[-0.12,0.28,-0.2],[0.05,0.55,0.05],[0.2,0.5,-0.08],[-0.18,0.52,0]].forEach(([x,y,z],k) => mesh(new THREE.IcosahedronGeometry(0.16, 0), k % 3 ? dark : leafM, x, y, z, sway));
+      for (let k = 0; k < 4; k++) mesh(new THREE.CylinderGeometry(0.02, 0.02, 0.3, 4), dark, (k-1.5)*0.1, 0.12, 0, g, false);
+    }
+  }
+
+  /* ---------------- bot (demo + helper) ---------------- */
+  botFarm(dt){
+    const s = this.s; this.botT = (this.botT || 0) - dt; if (this.botT > 0) return;
+    this.botT = s.mode === 'demo' ? 0.42 : 1.5;
+    const P = this.plots;
+    const ripe = P.find(p => p.state === 'ripe' && !(p.golden && s.mode === 'demo' && s.demoT < 38.6));
+    if (ripe) return this.tapPlot(ripe.i, true);
+    const dry = P.find(p => p.state === 'seed' || p.state === 'thirsty');
+    if (dry) return this.tapPlot(dry.i, true);
+    if (FLAVORS[s.flavor].cow && s.cowReady) return this.tapCow();
+    if (s.mode === 'demo' && this.canBlend() && !s.cup && s.inv.seasoning === 0) return this.blend();
+    const empty = P.find(p => p.state === 'empty');
+    if (empty){
+      const r = FLAVORS[s.flavor].recipe, prev = s.seed;
+      let want = 'potato';
+      for (const k of Object.keys(r)) if (CROPS[k] && s.inv[k] < r[k] && !P.some(p => p.type === k && p.state !== 'empty')) want = k;
+      s.seed = want; this.tapPlot(empty.i, true); s.seed = prev;
+    }
+  }
+  botCut(dt){
+    const s = this.s; this.botCutT = (this.botCutT || 0) - dt;
+    if (s.mode === 'demo' && this.canBlend() && !s.cup && s.inv.seasoning === 0) return this.blend();
+    if (this.botCutT > 0 || !this.canCut()) return;
+    if (Math.abs(s.needle - s.zoneC) < 0.03 || Math.random() < 0.003){ this.cut(s.needle); this.botCutT = 0.15; }
+  }
+  demoUpdate(dt){
+    const s = this.s; s.demoT += dt;
+    let cur = DEMO_SCRIPT[0]; for (const d of DEMO_SCRIPT) if (s.demoT >= d[0]) cur = d;
+    if (s.area !== cur[1]) s.area = cur[1];
+    s.caption = { text:cur[2], sub:cur[3], id:cur[0] };
+    if (s.demoT > 36.2 && !this.demoGold){
+      this.demoGold = true; const p = this.plots[2]; p.type = 'potato'; p.state = 'ripe'; p.prog = 1; p.golden = true;
+    }
+    this.botFarm(dt);
+    if (s.area === 1) this.botCut(dt);
+  }
+
+  /* ---------------- ending ---------------- */
+  beginEnding(){
+    const s = this.s; s.mode = 'ending'; s.endT = 0; s.area = 1; s.combo = 0; this.setFever(false);
+    const kc = this.caroChan; kc.target.set(2.6, 0.2, 3.6); kc.face = 0.6; kc.waving = true; kc.keepTool = null;
+    this.charDo(this.potaKun, null, 'cheer');
+    this.callout(s.shipped >= s.goal ? '出荷〜！' : '日が暮れた…', s.shipped + ' カップを 出荷するよ');
+    this.emitSnap();
+  }
+  finish(){
+    const s = this.s; s.mode = 'done';
+    const demo = this.dayIdx < 0 && !s.joined;
+    const cleared = s.shipped >= s.goal;
+    let stars = 0; if (cleared){ stars = 1; if (s.score >= s.cfg.s2) stars = 2; if (s.score >= s.cfg.s3) stars = 3; }
+    if (demo){ setTimeout(() => { if (this.s === s) { this.demoGold = false; this.startDemo(); } }, 1200); return; }
+    if (cleared){ Sfx.play('clear'); this.stickRain(44); }
+    this.emit('result', { dayIdx:this.dayIdx, day:s.cfg.day, flavor:s.flavor, goal:s.goal, shipped:s.shipped, score:s.score, stars, cleared,
+      perfects:s.perfects, maxCombo:s.maxCombo, golden:s.golden, cuts:s.cuts, joined:s.joined, s2:s.cfg.s2, s3:s.cfg.s3 });
+  }
+
+  /* ---------------- main loop ---------------- */
+  resize(){
+    const r = this.wrap.getBoundingClientRect(); this.w = r.width; this.h = r.height;
+    this.renderer.setSize(this.w, this.h, false); this.camera.aspect = this.w / this.h; this.camera.updateProjectionMatrix();
+  }
+  loop(now){
+    requestAnimationFrame(this.loop);
+    let dt = Math.min(0.05, (now - this.last) / 1000); this.last = now;
+    if (this.slowmo > 0){ this.slowmo -= dt; dt *= 0.35; }
+    if (!this.paused && this.s) this.update(dt);
+    this.updateCamera(dt);
+    this.renderer.render(this.scene, this.camera);
+    this.snapT -= dt; if (this.snapT <= 0){ this.snapT = 0.1; this.emitSnap(); }
+  }
+  update(dt){
+    const s = this.s; this.t += dt; const t = this.t;
+    const active = s.mode === 'play' || s.mode === 'demo';
+    if (s.intro > 0) s.intro -= dt;
+    if (active && s.intro <= 0){
+      s.time += dt;
+      if (s.mode === 'demo') this.demoUpdate(dt);
+      else if (s.helper) this.botFarm(dt);
+      if (s.time >= s.dayLen) this.beginEnding();
+    }
+    if (s.toastT > 0){ s.toastT -= dt; if (s.toastT <= 0) s.toast = null; }
+    if (this.cutCD){ this.cutCD -= dt; if (this.cutCD <= 0) this.cutCD = 0; }
+    // farm sim
+    const grow = s.mode === 'demo' ? 1.9 : 1;
+    if (active && s.intro <= 0) for (const p of this.plots){
+      if (p.state === 'growing'){
+        p.prog += dt / CROPS[p.type].grow * grow;
+        if (p.prog >= 0.5 && !p.watered2){ p.prog = 0.5; p.state = 'thirsty'; }
+        if (p.prog >= 1){ p.prog = 1; p.state = 'ripe'; if (p.type === 'potato' && s.mode === 'play' && Math.random() < 0.08) p.golden = true;
+          this.burst(new THREE.Vector3(p.x, 1.2, p.z), p.golden ? 0xffd31a : 0xffffff, p.golden ? 18 : 6, 1.5); }
+      }
+    }
+    if (active && FLAVORS[s.flavor].cow && !s.cowReady){ s.cowT += dt; if (s.cowT >= 4.5) s.cowReady = true; }
+    this.plots.forEach((p, i) => {
+      const key = p.state + p.type + (p.golden ? 'g' : '');
+      if (p.visKey !== key){ p.visKey = key; p.sparkle = null; if (p.state === 'empty') p.cropG.clear(); else this.buildCrop(p); }
+      if (p.state !== 'empty'){
+        const sc = p.state === 'seed' ? 1 : p.state === 'ripe' ? 1 + Math.sin(t*5 + i)*0.03 : 0.35 + 0.65*p.prog;
+        p.cropG.scale.setScalar(sc);
+        if (p.sway){ p.sway.rotation.z = Math.sin(t*2.2 + i) * 0.08; p.sway.rotation.x = Math.cos(t*1.7 + i*1.3) * 0.05; }
+        if (p.sparkle){ p.sparkle.material.rotation = t * 2; p.sparkle.scale.setScalar(0.45 + Math.sin(t*8)*0.12); if (Math.random() < 0.15) this.spawn({ geo:GEO('spark', () => new THREE.OctahedronGeometry(0.06, 0)), mat:MAT(0xfff2a0, { emissive:0x9a7a00 }), pos:new THREE.Vector3(p.x + (Math.random()-0.5)*1.4, 0.8, p.z + (Math.random()-0.5)*1.4), vel:new THREE.Vector3(0, 1.5, 0), life:0.8, spin:5 }); }
+      }
+      const showDrop = p.state === 'seed' || p.state === 'thirsty', showRipe = p.state === 'ripe';
+      p.icon.visible = showDrop || showRipe;
+      if (p.icon.visible){ p.icon.material = iconMat(showDrop ? 'drop' : p.golden ? 'gold' : p.type); p.icon.position.y = 2.1 + Math.sin(t*3 + i) * 0.12; }
+      p.soilMat.color.setHex(p.state === 'growing' ? 0x6e4520 : 0x9a6a38);
+    });
+    this.cowIcon.visible = FLAVORS[s.flavor].cow && s.cowReady;
+    this.cowIcon.position.y = 2.4 + Math.sin(t*3) * 0.12;
+    this.cowBody.rotation.z = Math.sin(t*1.5) * 0.03; this.cowBody.position.y = Math.abs(Math.sin(t*1.5)) * 0.03;
+    this.updateChar(this.potaKun, dt, t); this.updateChar(this.caroChan, dt, t);
+    if (this.roofCup){ this.roofCup.rotation.y = t * 0.6; this.roofCup.position.y = 4.85 + Math.sin(t * 2) * 0.12; }
+    // factory sim
+    if (active || s.mode === 'ending'){
+      s.needle += s.ndir * s.speed * dt;
+      if (s.needle > 1){ s.needle = 1; s.ndir = -1; } if (s.needle < 0){ s.needle = 0; s.ndir = 1; }
+    }
+    if (active && s.intro <= 0){
+      if (s.log <= 0 && !s.loading && s.inv.potato > 0) this.loadLog();
+      if (!s.cup){ s.cupCD -= dt; if (s.cupCD <= 0 && s.inv.seasoning > 0) this.spawnCup(); }
+    }
+    const nd = document.getElementById('needle'); if (nd) nd.style.left = (s.needle * 100) + '%';
+    const beltSp = s.mode === 'ending' ? 0.4 : 1;
+    this.belt1Tex.offset.x -= dt * 0.9 * beltSp; this.belt2Tex.offset.y += dt * 0.9 * beltSp;
+    this.tankFill.scale.y = Math.max(0.02, Math.min(s.inv.seasoning, 8) / 8 * 1.7); this.tankFill.position.y = 0.3 + this.tankFill.scale.y / 2;
+    // ambient motion
+    this.blades.rotation.z -= dt * 1.4;
+    this.trees.forEach(g => { g.rotation.z = Math.sin(t*1.2 + g.userData.ph) * 0.025; });
+    this.clouds.forEach(c => { c.position.x += c.userData.v * dt; if (c.position.x > FX + 26) c.position.x = -18; });
+    this.steamT -= dt;
+    if (this.steamT <= 0){ this.steamT = 0.22; this.steamSrc.forEach(src => this.spawn({ geo:GEO('steam', () => new THREE.SphereGeometry(0.35, 8, 6)), mat:MAT(0xffffff, { transparent:true, opacity:0.85 }), pos:src.clone().add(new THREE.Vector3((Math.random()-0.5)*0.3, 0, 0)), vel:new THREE.Vector3(0.35 + Math.random()*0.2, 1.3, 0), life:2.2, fade:true, grow:1.1 })); }
+    // ending sequence
+    if (s.mode === 'ending'){
+      s.endT += dt;
+      if (s.endT > 1.4){
+        if (!this.truckGo){ this.truckGo = true; Sfx.play('horn'); }
+        this.truckV = (this.truckV || 0) + dt * 5; this.truck.position.x += this.truckV * dt;
+        this.wheels.forEach(w => { w.rotation.y += this.truckV * dt * 3; });
+        if (Math.random() < 0.5) this.spawn({ geo:GEO('dust', () => new THREE.SphereGeometry(0.25, 6, 5)), mat:MAT(0xe8d6a8, { transparent:true, opacity:0.8 }), pos:this.truck.position.clone().add(new THREE.Vector3(-1.6, 0.3, (Math.random()-0.5)*1.2)), vel:new THREE.Vector3(-0.5, 0.6, 0), life:0.8, fade:true, grow:1.5 });
+      }
+      if (s.endT > 4.6){ this.truckGo = false; this.finish(); }
+    }
+    // particles
+    for (let i = this.parts.length - 1; i >= 0; i--){
+      const p = this.parts[i]; p.life -= dt;
+      p.vel.y -= p.grav * dt; p.m.position.addScaledVector(p.vel, dt);
+      if (p.spin){ p.m.rotation.x += p.spin * dt; p.m.rotation.y += p.spin * dt * 0.7; }
+      if (p.grow) p.m.scale.multiplyScalar(1 + p.grow * dt);
+      if (p.fade) p.m.material.opacity = Math.max(0, p.life / p.max) * 0.85;
+      if (p.m.position.y < 0.1 && p.grav){ p.m.position.y = 0.1; p.vel.multiplyScalar(0.4); p.vel.y = Math.abs(p.vel.y) * 0.3; }
+      if (p.life <= 0){ this.scene.remove(p.m); if (p.own) p.m.material.dispose(); this.parts.splice(i, 1); }
+    }
+    // tweens
+    for (let i = this.tweens.length - 1; i >= 0; i--){
+      const tw = this.tweens[i]; tw.t += dt; const k = Math.min(1, tw.t / tw.dur);
+      tw.fn(k); if (k >= 1){ this.tweens.splice(i, 1); tw.done && tw.done(); }
+    }
+    this.updateSky();
+  }
+  updateSky(){
+    const k = this.tod();
+    const keys = [[0, 0xffcfa0, 0xffd8a8, 0.7], [0.22, 0xa6deff, 0xfff4e0, 0.92], [0.6, 0x8fd2ff, 0xffffff, 1.0], [0.82, 0xffb27a, 0xffc890, 0.85], [1, 0xf08a7a, 0xff9a70, 0.62]];
+    let a = keys[0], b = keys[keys.length - 1];
+    for (let i = 0; i < keys.length - 1; i++) if (k >= keys[i][0] && k <= keys[i+1][0]){ a = keys[i]; b = keys[i+1]; break; }
+    const f = (k - a[0]) / Math.max(0.0001, b[0] - a[0]);
+    this.skyCol.setHex(a[1]).lerp(new THREE.Color(b[1]), f); this.scene.fog.color.copy(this.skyCol);
+    this.sun.color.setHex(a[2]).lerp(new THREE.Color(b[2]), f); this.sun.intensity = lerp(a[3], b[3], f);
+    this.hemi.intensity = 0.5 + 0.15 * lerp(a[3], b[3], f);
+  }
+  updateCamera(dt){
+    const s = this.s;
+    let tx = s && s.area === 1 ? FX : 0;
+    if (s && s.mode === 'ending' && s.endT > 1.4) tx = FX + Math.min(4, (this.truck.position.x - FX - 1.4) * 0.5);
+    this.camX += (tx - this.camX) * Math.min(1, dt * 4.5);
+    const aspect = this.w / this.h, vf = this.camera.fov * Math.PI / 180;
+    const hf = 2 * Math.atan(Math.tan(vf / 2) * aspect);
+    const fk = clamp(this.camX / FX, 0, 1);
+    const d = clamp(lerp(6.0, 5.6, fk) / Math.tan(hf / 2), 14, 40);
+    const dir = new THREE.Vector3(0.12, 0.8, 0.62).normalize();
+    const look = new THREE.Vector3(this.camX, 0, lerp(1.8, 2.9, fk));
+    this.camera.position.copy(look).addScaledVector(dir, d);
+    this.camera.lookAt(look);
+    const ang = lerp(-1.0, 1.0, this.tod());
+    this.sun.position.set(this.camX + Math.sin(ang) * 14, 16 + Math.cos(ang) * 4, 9);
+    this.sun.target.position.set(this.camX, 0, 0);
+  }
+  snapshot(){
+    const s = this.s; if (!s) return null;
+    const fl = FLAVORS[s.flavor];
+    let hint = null, warn = false;
+    if (s.toast){ hint = s.toast; warn = true; }
+    else if (s.area === 0){
+      const P = this.plots;
+      if (P.some(p => p.state === 'ripe')) hint = '実った作物を タップで収穫！';
+      else if (P.some(p => p.state === 'seed' || p.state === 'thirsty')) hint = '水マークの畑を タップで水やり';
+      else if (P.some(p => p.state === 'empty')) hint = '空いている畑を タップで種まき';
+      else hint = 'そだつまで 工場へ行こう →';
+      if (fl.cow && s.cowReady) hint = 'ウシをタップで ミルク！';
+    } else {
+      if (s.log <= 0 && !s.loading && s.inv.potato <= 0){ hint = 'じゃがいもがないよ！ ← 畑で収穫'; warn = true; }
+      else if (!s.cup && s.inv.seasoning <= 0){ hint = this.canBlend() ? 'ブレンドで 味パウダーを作ろう！' : '具材がないよ！ ← 畑で育てよう'; warn = true; }
+      else hint = '赤いゾーンで タップ！ ぴったりカット';
+    }
+    return {
+      mode:s.mode, area:s.area, day:s.cfg.day, flavor:s.flavor, flavorName:fl.name, goal:s.goal, shipped:s.shipped, score:s.score,
+      combo:s.combo, fever:!!s.fever, tod:this.tod(), inv:{ ...s.inv }, seed:s.seed, seeds:fl.seeds, cow:fl.cow, recipe:fl.recipe,
+      cupFill:s.cup ? s.cup.n : 0, cupReady:!!(s.cup && s.cup.ready), canCut:this.canCut(), canBlend:this.canBlend(), blending:s.blending,
+      zoneC:s.zoneC, hint, warn, intro:s.intro > 0, unlock:!!s.cfg.unlock, helper:s.helper, joined:s.joined,
+      caption:s.caption, paused:this.paused, sound:Sfx.on, bump:{ ...s.bump }, timeLeft:Math.max(0, s.dayLen - s.time),
+    };
+  }
+  emitSnap(){ this.emit('change', this.snapshot()); }
+}
+
+/* =====================================================================
+   SAVE
+   ===================================================================== */
+const SAVE_KEY = 'jaga-farm-factory-v1';
+function loadSave(){ try { const v = JSON.parse(localStorage.getItem(SAVE_KEY)); if (v && v.stars) return v; } catch(e) {} return { unlocked:1, stars:[0,0,0,0,0,0], best:[0,0,0,0,0,0] }; }
+function writeSave(v){ try { localStorage.setItem(SAVE_KEY, JSON.stringify(v)); } catch(e) {} }
+
+/* =====================================================================
+   REACT UI
+   ===================================================================== */
+const { useState, useEffect, useRef } = React;
+const html = htm.bind(React.createElement);
+
+function ItemIcon({ k, size=20 }){
+  const c = ITEM[k].color;
+  const glyph = { potato:'じ', carrot:'に', parsley:'パ', milk:'ミ', seasoning:'味' }[k];
+  return html`<span className="dot" style=${{ background:c, width:size, height:size }}>${glyph}</span>`;
+}
+function SeedIcon({ k }){
+  if (k === 'potato') return html`<svg className="em" viewBox="0 0 40 40"><ellipse cx="20" cy="22" rx="14" ry="11" fill="#c98d3e" transform="rotate(-15 20 22)"/><circle cx="15" cy="19" r="1.6" fill="#7a4a18"/><circle cx="24" cy="25" r="1.6" fill="#7a4a18"/><circle cx="25" cy="17" r="1.4" fill="#7a4a18"/></svg>`;
+  if (k === 'carrot') return html`<svg className="em" viewBox="0 0 40 40"><path d="M12 14h16L20 38z" fill="#f08a24"/><ellipse cx="16" cy="9" rx="3" ry="7" fill="#3c9a32" transform="rotate(-20 16 9)"/><ellipse cx="24" cy="9" rx="3" ry="7" fill="#3c9a32" transform="rotate(20 24 9)"/></svg>`;
+  return html`<svg className="em" viewBox="0 0 40 40">${[[20,13],[12,20],[28,20],[16,28],[24,28],[20,21]].map(([x,y],i) => html`<circle key=${i} cx=${x} cy=${y} r="7" fill=${i % 2 ? '#2f8f2f' : '#3fae3a'}/>`)}</svg>`;
+}
+
+function Hud({ snap, eng, onPause }){
+  const s = snap; const prev = useRef({});
+  const [bumped, setBumped] = useState({});
+  useEffect(() => {
+    const nb = {}; Object.keys(s.bump).forEach(k => { if (s.bump[k] !== prev.current[k]) nb[k] = true; });
+    prev.current = s.bump;
+    if (Object.keys(nb).length){ setBumped(nb); const t = setTimeout(() => setBumped({}), 360); return () => clearTimeout(t); }
+  }, [JSON.stringify(s.bump)]);
+  const hour = 6 + s.tod * 12, hh = Math.floor(hour), mm = Math.floor((hour - hh) * 6) * 10;
+  const items = ['potato', ...Object.keys(s.recipe).filter(k => k !== 'potato'), 'seasoning'];
+  const recipeText = Object.keys(s.recipe).map(k => ITEM[k].name + '×' + s.recipe[k]).join('＋');
+  const zw = 15, gw = 40;
+  return html`
+    <div className="top">
+      <div className="row">
+        <button className="iconbtn" aria-label="一時停止" onClick=${onPause}>Ⅱ</button>
+        <span className="daypill">${s.joined ? 'DEMO' : 'DAY ' + s.day}</span>
+        <div className="clock sticker">
+          <div className="t"><span><i className="sunico" style=${{ background:s.tod < 0.8 ? '#ffb800' : '#ff6a3c' }}></i>${hh}:${String(mm).padStart(2, '0')}</span><span className="flv">${s.flavorName}味</span></div>
+          <div className="bar"><i style=${{ width:(s.tod * 100) + '%' }}></i></div>
+        </div>
+        <div className="score">${s.score.toLocaleString()}</div>
+      </div>
+      <div className="row">
+        <div className="goal sticker">
+          <b>出荷 ${s.shipped}/${s.goal}</b>
+          <div className="cups">${Array.from({ length:Math.max(s.goal, s.shipped) }, (_, i) => html`<span key=${i} className=${'cupi' + (i < s.shipped ? ' on' : '')}></span>`)}</div>
+        </div>
+      </div>
+      <div className="inv">
+        ${items.map(k => html`<span key=${k} className=${'chip' + (bumped[k] ? ' bump' : '')}><${ItemIcon} k=${k}/>${ITEM[k].name} ${s.inv[k]}</span>`)}
+      </div>
+      ${s.shipped >= s.goal && s.mode === 'play' && html`<button className="endbtn" onClick=${() => eng.endEarly()}>出荷して1日を終える ▶</button>`}
+    </div>
+    ${s.fever && html`<div className="fevtag">FEVER ×2</div>`}
+    ${s.combo >= 2 && html`<div className="combo"><b key=${s.combo}>${s.combo}</b><span>COMBO</span></div>`}
+    <div className="bottom">
+      ${s.hint && html`<div className=${'hint' + (s.warn ? ' warn' : '')}>${s.hint}</div>`}
+      <div className="panel sticker">
+        ${s.area === 0 ? html`
+          <div className="seeds">
+            ${s.seeds.map(k => html`<button key=${k} className=${'seed' + (s.seed === k ? ' on' : '')} onClick=${() => eng.setSeed(k)}><${SeedIcon} k=${k}/>${CROPS[k].name}</button>`)}
+            ${s.cow && html`<div className="seed" style=${{ borderStyle:'dashed' }}><svg className="em" viewBox="0 0 40 40"><rect x="13" y="12" width="14" height="22" rx="3" fill="#e8f4ff" stroke="#5aa9e6" stroke-width="2"/><rect x="15" y="6" width="10" height="7" fill="#5aa9e6"/></svg>ウシをタップ</div>`}
+          </div>
+          <button className=${'blend' + (s.canBlend ? ' ok' : '')} onClick=${() => eng.blend()}>ブレンド <small>${recipeText} → 味パウダー×2</small></button>
+        ` : html`
+          <div className="gauge" aria-label="カットのタイミングゲージ">
+            <div className="zone-good" style=${{ left:(s.zoneC * 100 - gw / 2) + '%', width:gw + '%' }}></div>
+            <div className="zone-perfect" style=${{ left:(s.zoneC * 100 - zw / 2) + '%', width:zw + '%' }}>ぴったり</div>
+            <div id="needle"></div>
+          </div>
+          <div className="factory-row">
+            <div className="fill" title="カップの詰め具合">${Array.from({ length:STICKS_PER_CUP }, (_, i) => html`<i key=${i} className=${i < s.cupFill ? 'on' : ''}></i>`)}</div>
+            <button className=${'cutbtn' + (s.canCut ? '' : ' off')} onPointerDown=${e => { e.preventDefault(); eng.cut(eng.s.needle); }}>カット！</button>
+          </div>
+          <button className=${'blend' + (s.canBlend ? ' ok' : '')} onClick=${() => eng.blend()}>ブレンド <small>${recipeText} → 味パウダー×2</small></button>
+        `}
+        <div className="tabs">
+          <button className=${'tab' + (s.area === 0 ? ' on' : '')} onClick=${() => eng.setArea(0)}>畑</button>
+          <span className="swipe">← スワイプ →</span>
+          <button className=${'tab' + (s.area === 1 ? ' on' : '')} onClick=${() => eng.setArea(1)}>工場</button>
+        </div>
+      </div>
+    </div>
+    ${s.intro && html`<div className="intro">
+      <div className="d">DAY ${s.day}</div>
+      ${s.unlock && html`<div className="n">NEW！ ${s.flavorName}味 解放</div>`}
+      <div className="g">目標：${s.goal}カップ出荷</div>
+    </div>`}
+  `;
+}
+
+function CupArt(){
+  const sticks = [[52,30],[64,18],[76,26],[88,14],[100,24],[112,20],[124,32],[70,40],[96,38]];
+  return html`<svg className="cupart" viewBox="0 0 180 180" aria-hidden="true">
+    <defs>
+      <pattern id="spk" width="10" height="16" patternUnits="userSpaceOnUse"><rect width="10" height="16" fill="#f7e6a6"/><circle cx="3" cy="4" r="1.5" fill="#f08a24"/><circle cx="7" cy="11" r="1.4" fill="#3c9a32"/></pattern>
+    </defs>
+    ${sticks.map(([x, y], i) => html`<g key=${i} className="st" style=${{ animationDelay:(i * 0.11) + 's' }}><rect x=${x - 5} y=${y} width="10" height="100" rx="5" fill="url(#spk)" stroke="#c49a43" stroke-width="1.5" transform=${'rotate(' + ((x - 88) * 0.18) + ' ' + x + ' 140)'}/></g>`)}
+    <path d="M38 88h104l-12 84H50z" fill="#1f8a3c" stroke="#0f5e28" stroke-width="4" stroke-linejoin="round"/>
+    <rect x="34" y="82" width="112" height="12" rx="4" fill="#fff4cf" stroke="#0f5e28" stroke-width="3"/>
+    <ellipse cx="90" cy="130" rx="38" ry="26" fill="#fff3c4"/>
+    <text x="90" y="134" text-anchor="middle" font-family="Dela Gothic One, sans-serif" font-size="22" fill="#e3262b" stroke="#ffd31a" stroke-width="5" paint-order="stroke" stroke-linejoin="round">じゃが</text>
+    <text x="90" y="151" text-anchor="middle" font-family="M PLUS Rounded 1c, sans-serif" font-weight="900" font-size="11" fill="#1f8a3c">サラダ</text>
+  </svg>`;
+}
+
+function Title({ snap, eng, onPlay, onJoin, onHow }){
+  const cap = snap && snap.caption;
+  return html`<div className="screen" onPointerUp=${e => { if (!e.target.closest('button')) onJoin(); }}>
+    <div className="demo-tag">DEMO</div>
+    <div className="logo">
+      <span className="brand">畑から カップまで</span>
+      <h1>じゃが畑<span>ファクトリー</span></h1>
+    </div>
+    <${CupArt}/>
+    ${cap && html`<div className="caption" key=${cap.id}>${cap.text}<small>${cap.sub}</small></div>`}
+    <div className="tapjoin">画面をタップすると デモに参加できるよ</div>
+    <div className="titlebtns">
+      <button className="big" onClick=${onPlay}>あそぶ</button>
+      <button className="sub" onClick=${onHow}>あそびかた</button>
+    </div>
+  </div>`;
+}
+
+const HOW_STEPS = [
+  { t:'畑で育てる', icon:'farm', p:html`空いている畑を<em>タップで種まき</em>。水マーク💧が出たら<em>タップで水やり</em>（育つ途中でもう1回）。実ったら<em>タップで収穫</em>！下のボタンで植える作物を選べるよ。` },
+  { t:'ブレンドで味をつくる', icon:'blend', p:html`にんじん＋パセリを<em>ブレンド</em>すると<em>サラダ味パウダー×2</em>。パウダー1つでカップ1つ分。チーズ味の日はウシをタップしてミルクを集めよう。` },
+  { t:'タイミングよくカット', icon:'cut', p:html`工場では針が左右に動くよ。<em>赤い「ぴったり」ゾーン</em>に重なった瞬間に、画面か<em>カット！</em>ボタンをタップ。キャロちゃんがスティックを切ってカップに立てるよ。` },
+  { t:'カップに詰めて出荷', icon:'cup', p:html`8本でカップ完成、トラックへ運ばれるよ。8本ぜんぶぴったりなら<em>PERFECT CUP +250</em>。ぴったりを10回続けると<em>FEVER（得点2倍）</em>！` },
+  { t:'夕方に1日おわり', icon:'truck', p:html`夕方になるとトラックが出発。<em>目標カップ数で★1</em>、スコアで★2・★3。目標を達成したら「出荷して1日を終える」で早上がりもできるよ。` },
+];
+function HowIcon({ k }){
+  const g = {
+    farm:html`<rect x="6" y="30" width="44" height="18" rx="4" fill="#9a6a38"/><circle cx="20" cy="26" r="8" fill="#4f9d3a"/><circle cx="30" cy="22" r="9" fill="#5cae44"/><path d="M40 8c6 8 6 13 0 13s-6-5 0-13z" fill="#3fa3ff"/>`,
+    blend:html`<path d="M14 12h28l-4 26H18z" fill="#cfefff" stroke="#2a9a48" stroke-width="3"/><circle cx="24" cy="28" r="4" fill="#f08a24"/><circle cx="32" cy="24" r="4" fill="#3c9a32"/><rect x="12" y="38" width="32" height="12" rx="3" fill="#e3262b"/>`,
+    cut:html`<rect x="4" y="22" width="48" height="14" rx="7" fill="#f7e6a6" stroke="#b98b3c" stroke-width="2"/><rect x="22" y="22" width="12" height="14" fill="#e3262b"/><rect x="26" y="14" width="4" height="30" rx="2" fill="#fff" stroke="#3a2a14" stroke-width="2"/>`,
+    cup:html`${[16,22,28,34,40].map((x, i) => html`<rect key=${i} x=${x - 2.5} y=${6 + (i % 2) * 4} width="5" height="30" rx="2.5" fill="#f7e6a6" stroke="#c49a43"/>`)}<path d="M10 26h36l-4 26H14z" fill="#1f8a3c"/><ellipse cx="28" cy="40" rx="10" ry="6" fill="#fff3c4"/>`,
+    truck:html`<rect x="4" y="22" width="30" height="16" rx="2" fill="#2a9a48"/><rect x="34" y="18" width="16" height="20" rx="3" fill="#e3262b"/><circle cx="14" cy="42" r="5" fill="#333"/><circle cx="42" cy="42" r="5" fill="#333"/><circle cx="46" cy="10" r="6" fill="#ff9a50"/>`,
+  }[k];
+  return html`<svg viewBox="0 0 56 56" aria-hidden="true">${g}</svg>`;
+}
+function Howto({ onClose }){
+  return html`<div className="screen dim" style=${{ justifyContent:'center' }}>
+    <div className="howto" role="dialog" aria-label="あそびかた">
+      <header><h2>あそびかた</h2><button onClick=${onClose}>とじる</button></header>
+      <div className="list">
+        ${HOW_STEPS.map((s, i) => html`<div className="step" key=${i}><${HowIcon} k=${s.icon}/><div><h3><b>${i + 1}</b>${s.t}</h3><p>${s.p}</p></div></div>`)}
+        <div className="tips">
+          <b>スワイプ</b>で 畑 ⇄ 工場 を行き来できるよ。<br/>
+          <b>ポテくん</b>は畑、<b>キャロちゃん</b>は工場でお手伝い。<br/>
+          ときどき実る<b>ゴールデンポテト</b>を収穫すると…LEGENDARY！<br/>
+          DAY3で<b>チーズ味</b>、DAY5で<b>じゃがバター味</b>が解放されるよ。
+        </div>
+      </div>
+      <footer><button className="big" onClick=${onClose}>わかった！</button></footer>
+    </div>
+  </div>`;
+}
+
+function Select({ save, onStart, onBack }){
+  return html`<div className="screen dim" style=${{ justifyContent:'center' }}>
+    <div className="card">
+      <h2>どの日を あそぶ？</h2>
+      <div className="days">
+        ${DAYS.map((d, i) => {
+          const lock = i >= save.unlocked, fl = FLAVORS[d.flavor];
+          return html`<button key=${i} className=${'daycard' + (lock ? ' lock' : '')} disabled=${lock} onClick=${() => onStart(i)}>
+            <span className="dn">DAY ${d.day} ${lock ? '🔒' : ''}</span>
+            <span className="flv" style=${{ background:fl.hex }}>${fl.name}味${d.unlock ? ' NEW' : ''}</span>
+            <span className="meta">目標 ${d.goal}カップ・${d.len}秒</span>
+            <span className="stars">${[1,2,3].map(n => html`<span key=${n} className=${save.stars[i] >= n ? 'on' : ''}>★</span>`)}</span>
+          </button>`;
+        })}
+      </div>
+      <button className="sub" onClick=${onBack}>タイトルへ</button>
+    </div>
+  </div>`;
+}
+
+function Result({ r, save, onNext, onRetry, onTitle, onPlay }){
+  const fl = FLAVORS[r.flavor];
+  const nextOk = !r.joined && r.cleared && r.dayIdx < DAYS.length - 1;
+  return html`<div className="screen dim" style=${{ justifyContent:'center' }}>
+    <div className="card">
+      <span className="flv" style=${{ background:fl.hex }}>${fl.name}味</span>
+      <h2>${r.joined ? 'デモデイ おつかれさま！' : r.cleared ? 'DAY ' + r.day + ' クリア！' : '目標まで あと' + (r.goal - r.shipped) + 'カップ…'}</h2>
+      ${!r.joined && html`<div className="rstars">${[1,2,3].map(n => html`<span key=${n} className=${'rstar' + (r.stars >= n ? ' on' : '')} style=${{ animationDelay:(0.3 + n * 0.25) + 's' }}>★</span>`)}</div>`}
+      <div className="res-score">${r.score.toLocaleString()}</div>
+      <div className="stats">
+        <span>出荷カップ</span><b>${r.shipped} / ${r.goal}</b>
+        <span>ぴったりカット</span><b>${r.perfects} / ${r.cuts}</b>
+        <span>最大コンボ</span><b>${r.maxCombo}</b>
+        <span>ゴールデンポテト</span><b>${r.golden}</b>
+        ${!r.joined && html`<span>★2 / ★3 ライン</span><b>${r.s2.toLocaleString()} / ${r.s3.toLocaleString()}</b>`}
+      </div>
+      ${nextOk && html`<button className="big" onClick=${onNext}>つぎの日へ ▶</button>`}
+      ${r.joined && html`<button className="big" onClick=${onPlay}>DAY 1 から あそぶ</button>`}
+      ${!r.joined && html`<button className=${nextOk ? 'sub' : 'big'} onClick=${onRetry}>もう一度</button>`}
+      <button className="sub" onClick=${onTitle}>タイトルへ</button>
+    </div>
+  </div>`;
+}
+
+function Pause({ snap, onResume, onTitle, onSound, onHow }){
+  return html`<div className="screen dim" style=${{ justifyContent:'center' }}>
+    <div className="card">
+      <h2>ひとやすみ</h2>
+      <button className="big" onClick=${onResume}>つづける</button>
+      <button className="sub" onClick=${onHow}>あそびかた</button>
+      <button className="sub" onClick=${onSound}>サウンド：${snap.sound ? 'ON' : 'OFF'}</button>
+      <button className="sub" onClick=${onTitle}>タイトルへ</button>
+    </div>
+  </div>`;
+}
+
+function App(){
+  const canvasRef = useRef(), fxRef = useRef(), wrapRef = useRef();
+  const [eng, setEng] = useState(null);
+  const [snap, setSnap] = useState(null);
+  const [screen, setScreen] = useState('title');
+  const [result, setResult] = useState(null);
+  const [save, setSave] = useState(loadSave);
+  const screenRef = useRef(screen); screenRef.current = screen;
+
+  useEffect(() => {
+    let alive = true;
+    const go = () => {
+      if (!alive) return;
+      const e = new Game(canvasRef.current, fxRef.current, wrapRef.current);
+      window.__game = e;
+      e.on('change', setSnap);
+      e.on('result', r => {
+        setResult(r); setScreen('result');
+        if (!r.joined) setSave(sv => {
+          const n = { ...sv, stars:[...sv.stars], best:[...sv.best] };
+          n.stars[r.dayIdx] = Math.max(n.stars[r.dayIdx], r.stars);
+          n.best[r.dayIdx] = Math.max(n.best[r.dayIdx], r.score);
+          if (r.cleared) n.unlocked = Math.max(n.unlocked, Math.min(DAYS.length, r.dayIdx + 2));
+          writeSave(n); return n;
+        });
+      });
+      e.startDemo(); setEng(e);
+    };
+    const fontsReady = Promise.all([document.fonts.load('64px "Dela Gothic One"'), document.fonts.load('900 38px "M PLUS Rounded 1c"')]).catch(() => {});
+    Promise.race([fontsReady, new Promise(r => setTimeout(r, 2500))]).then(go);
+    return () => { alive = false; };
+  }, []);
+
+  const [howto, setHowto] = useState(false);
+  const openHow = () => { if (screen === 'play') eng.setPaused(true); setHowto(true); };
+  const closeHow = () => { setHowto(false); if (screen === 'play') eng.setPaused(false); };
+  const start = i => {
+    eng.startDay(i); setScreen('play');
+    if (!save.seenHow){ eng.setPaused(true); setHowto(true); setSave(sv => { const n = { ...sv, seenHow:true }; writeSave(n); return n; }); }
+  };
+  const toTitle = () => { setHowto(false); eng.startDemo(); setScreen('title'); };
+  const playing = snap && (screen === 'play') && snap.mode !== 'done';
+
+  return html`<div className="wrap" ref=${wrapRef}>
+    <canvas ref=${canvasRef}></canvas>
+    <div className="ui">
+      <div className="fx" ref=${fxRef}></div>
+      ${playing && html`<${Hud} snap=${snap} eng=${eng} onPause=${() => eng.setPaused(true)}/>`}
+      ${eng && screen === 'title' && html`<${Title} snap=${snap} eng=${eng} onHow=${openHow} onPlay=${() => { Sfx.init(); Sfx.play('click'); setScreen('select'); }} onJoin=${() => { eng.joinDemo(); setScreen('play'); }}/>`}
+      ${screen === 'select' && html`<${Select} save=${save} onStart=${start} onBack=${() => setScreen('title')}/>`}
+      ${screen === 'result' && result && html`<${Result} r=${result} save=${save}
+          onNext=${() => start(result.dayIdx + 1)} onRetry=${() => start(result.dayIdx)} onTitle=${toTitle} onPlay=${() => start(0)}/>`}
+      ${playing && snap.paused && !howto && html`<${Pause} snap=${snap} onResume=${() => eng.setPaused(false)} onTitle=${toTitle}
+          onHow=${() => setHowto(true)} onSound=${() => { Sfx.on = !Sfx.on; eng.emitSnap(); }}/>`}
+      ${howto && html`<${Howto} onClose=${closeHow}/>`}
+    </div>
+    ${!eng && html`<div className="loading">じゅんびちゅう…</div>`}
+  </div>`;
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(html`<${App}/>`);
+</script>
